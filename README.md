@@ -1,1 +1,3 @@
-# tdat3025-ml-prosjekt
+# ZeroGO
+
+## THE ml prosjekt to replace AlphaGo/AlphaZero
