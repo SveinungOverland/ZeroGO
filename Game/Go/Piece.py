@@ -1,4 +1,4 @@
-radius = 50 # Radius of the pieces. TODO: make global variable across all classes.
+import Board
 
 class Piece:
     # x = x position, duh
@@ -8,6 +8,9 @@ class Piece:
         self.x = x
         self.y = y
         self.colour = colour
+
+        global radius
+        radius = Board.radius
     
     # Shows the piece
     def show(self):

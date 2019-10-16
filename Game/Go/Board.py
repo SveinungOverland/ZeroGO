@@ -1,10 +1,7 @@
 from Piece import Piece
 
-global radius # Radius of the pieces. Want to make this accessible in Piece.py, but I don't know how, #RIP
-radius = 50
-
 class Board:
-    def __init__(self, x, y, w, h, dimension=9):        
+    def __init__(self, x, y, w, h, dimension=9):     
         self.x = x
         self.y = y
         self.w = w
@@ -16,6 +13,8 @@ class Board:
         self.piece_shadow = None
         
         self.black_color = True
+        global radius
+        radius = self.line_gap / 1.25
     
     # Renders the board with all the pieces.
     def show(self):
