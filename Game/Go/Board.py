@@ -34,18 +34,15 @@ class Board:
             fill(0 if self.black_color else 255, 100)
             row_index, column_index = self.piece_shadow
             ellipse(column_index * self.line_gap + self.x, row_index * self.line_gap + self.y, radius, radius)
-            
-            # DEBUG stuff
-            fill(0)
-            textSize(20)
-            text("({}, {})".format(row_index, column_index), column_index * self.line_gap + self.x, row_index * self.line_gap + self.y - 20)
         
         
-        # Render all the pieces on the board.
-        for row in self.board:
-            for cell in row:
-                if cell != None:
-                    cell.show()
+        # # Render all the pieces on the board.
+        # for row in self.board:
+        #     for cell in row:
+        #         if cell != None:
+        #             cell.show()
+        
+        [cell.show() for row in self.board for cell in row if cell != None] # Mad list comprehension.
     
     # Method called every time the mouse is moved so that the shadow can update.
     def move_shadow(self, mouse_x, mouse_y):

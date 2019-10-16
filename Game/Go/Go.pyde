@@ -7,7 +7,7 @@ global board
 def setup():
     size(600, 600)
     global board    
-    board = Board(50, 50, 500, 500)
+    board = Board(x=50, y=50, w=500, h=500, dimension=9)
 
 # Called every frame
 def draw():
