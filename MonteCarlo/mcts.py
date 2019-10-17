@@ -1,3 +1,5 @@
+from MonteCarlo.Node import Node
+
 """
 Selection — you start in the root — the state, and select a child — a move. 
     I used the upper confident bound (UCB1) to select a child.
@@ -15,23 +17,23 @@ Simulation — play random simulation until the game is over.
 Back propagation — back propagate to all the visited nodes, increase by 1
     the visit number and if you win, increase by 1 the winning number.
 """
-from math import sqrt, log
-GAMMA = 0.3
 
 
-class Node:
-    def __init__(self, action, state, parent, terminate = False):
-        self.visits = 0
-        self.wins = 0
-        self.action = action
-        self.state = state
-        self.terminate = terminate
-        self.parent = parent
-        self.children = []
+"""
+enviroment consist of simulate, flatten
 
-    #Policy uses upperboundpolicy π = w/n +(-) c*sqrt(ln(N)/n)
-    #It changes from positive to minus, this depends on if it is the opponents turn 
-    # Explore vs. Exploit
-    def UCB1(self, opponent):
-        return self.win/(1+self.visits) - GAMMA * sqrt(log(self.parent.visits)/(1+self.visits)) if opponent else self.win/(1+self.visits) + GAMMA * sqrt(log(self.parent.visits)/(1+self.visits))
+"""
+class MCTS:
+    def __init__(self, enviroment, neural_network, ):
+        pass
 
+    
+    def pass_action(self, state):
+        pass
+
+
+    def back_propagation(self, state, win):
+        pass
+
+
+    

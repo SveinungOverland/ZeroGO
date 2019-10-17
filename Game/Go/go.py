@@ -1,4 +1,4 @@
-from Go.board import Board
+from Go.Board import Board
 from Go.point import Point
 
 import copy
