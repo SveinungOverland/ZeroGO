@@ -1,9 +1,7 @@
 import pygame
-from .go import screen
-
 
 class BoardView:
-    def __init__(self, x, y, width, height, dimension=9):
+    def __init__(self, screen, x, y, width, height, dimension=9):
         self.x = x
         self.y = y
         self.width = width
