@@ -14,7 +14,7 @@ board_x = 50
 board_y = 50
 board_width = 500
 board_height = 500
-dimension = 9
+dimension = 5
 line_gap = board_width / dimension
 
 board = BoardView(screen, board_x, board_y, board_width, board_height, dimension=dimension)
