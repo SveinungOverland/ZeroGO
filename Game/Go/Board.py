@@ -1,87 +1,167 @@
-from Piece import Piece
+import numpy as np
+from point import Point
 
 class Board:
-    def __init__(self, x, y, w, h, dimension=9):     
-        self.x = x
-        self.y = y
-        self.w = w
-        self.h = h
-        self.dimension = dimension - 1
-        self.line_gap = w / self.dimension
+
+    ERROR_INVALID_PLAYER = 21
+    ERROR_INVALID_POINT = 22
+    ERROR_OCCUPIED_POINT = 23
+
+    def __init__(self, size):
+        self.size = size
+        self.board = np.ndarray(shape=(size, size), dtype=Point)
+        for x in range(0, size):
+            for y  in range(0, size):
+                self.board[x, y] = Point(x, y)
+
+    def make_move(self, player, x, y):
+        # Check if player is either black or white
+        if player != Point.BLACK and player != Point.WHITE:
+            return Board.ERROR_INVALID_PLAYER, None
         
-        self.board = [[None for i in range(dimension)] for i in range(dimension)]
-        self.piece_shadow = None
+        if not self.__is_valid_slot(x, y):
+            return Board.ERROR_INVALID_POINT, None
+
+        if self.board[x,y].type != Point.EMPTY:
+            return Board.ERROR_OCCUPIED_POINT, None
+
+        # Make the move and calculate the changes
+        self.board[x, y].type = player
+
+        return self.board, self.board[x, y]
+
+
+    def find_group_from_point(self, point):
+        """
+            Finds the group of a given points with DFS from the given point
+        """
+
+        # Initialize necassary variables
+        group = []
+        stack = []
+        found = {}
+
+        cur_node = (point.x, point.y)
+        while cur_node is not None:
+            x, y = cur_node
+
+            # Check if the slot has been found previously or not
+            if cur_node not in found:
+                group.append(self.board[x, y])
+                found[cur_node] = True
+            
+            # Find the next unfound neighbouring point 
+            neighbours = self.board[x, y].get_neighbours(board=self.board, point_type=point.type)
+            next_point = next(filter(lambda neighbour: (neighbour.x, neighbour.y) not in found, neighbours), None)
+
+            # Set next point to check
+            if next_point is None and len(stack) > 0:
+                cur_node = stack.pop()
+            elif next_point is not None:
+                stack.append(cur_node)
+                cur_node = (next_point.x, next_point.y)
+            else:
+                cur_node = None
+
+        return np.array(group)
+
+    def find_liberties(self, group):
+        liberites = {}
+
+        # For each point in the group, find it's liberties if not already found
+        for point in group:
+            if (point.x, point.y) in liberites:
+                continue
+
+            for liberty in point.find_liberties(board=self.board):
+                liberites[(liberty.x, liberty.y)] = liberty
+            
+        return [liberty for ((x,y), liberty) in liberites.items()]
+
+    def check_group_for_capture(self, group):
+        '''
+            Checks if the group is captured and if so removes the group
+        '''
+        liberties = self.find_liberties(group)
+        opponent = group[0].opponent()
+
+        # Check if some liberties is not occupied by a opponent
+        for liberty in liberties:
+            if liberty.type is not opponent:
+                return False
+
+        # The group is captured, remove the group from the board
+        for point in group:
+            point.type = Point.EMPTY
+
+        return True
         
-        self.black_color = True
-        global radius
-        radius = self.line_gap / 1.25
-    
-    # Renders the board with all the pieces.
-    def show(self):
-        # Shows the background of the board, which is basically a brown square.
-        fill(237, 181, 101)
-        rect(self.x, self.y, self.w, self.h)
+    def calculate_score(self):
+        # TODO: Implement this method! :D 
+        """
+            Calculates the score for both BLACK and WHITE players, and returns count and a board with the belonging points
+        """
+        score_board = np.zeros((self.size, self.size), dtype=int)
+        score_black = 0
+        score_white = 0
+        checked_points = {} # Dict to check if a given point has been checked or not
         
-        # Creates the lines both vertically and horizontally.
-        strokeWeight(2)
-        for i in range(self.dimension):
-            line(self.x, self.y + i * self.line_gap, self.x + self.w, self.y + i * self.line_gap)
-            line(self.x + self.line_gap * i, self.y, self.x + self.line_gap * i, self.y + self.h)
-        
-        # Renders the shadow piece, which is the current piece to place.
-        if self.piece_shadow != None:
-            fill(0 if self.black_color else 255, 100)
-            row_index, column_index = self.piece_shadow
-            ellipse(column_index * self.line_gap + self.x, row_index * self.line_gap + self.y, radius, radius)
-        
-        
-        # # Render all the pieces on the board.
-        # for row in self.board:
-        #     for cell in row:
-        #         if cell != None:
-        #             cell.show()
-        
-        [cell.show() for row in self.board for cell in row if cell != None] # Mad list comprehension.
-    
-    # Method called every time the mouse is moved so that the shadow can update.
-    def move_shadow(self, mouse_x, mouse_y):
-        if mouse_x < self.x or mouse_x > self.x + self.w or mouse_y < self.y or mouse_y > self.y + self.h:
-            return
-        
-        actual_x = mouse_x - self.x + self.line_gap / 2
-        actual_y = mouse_y - self.y + self.line_gap / 2
-        row_index = actual_y // self.line_gap
-        column_index = actual_x // self.line_gap
-        
-        self.piece_shadow = (row_index, column_index)
-    
-    # Places the piece where the mouse is currently hovering
-    def place_piece(self):
-        row_index, column_index = self.piece_shadow          # Indexes of the current piece you want to place.
-        
-        # Check that the piece you want to put is not on an already existing piece
-        if self.board[row_index][column_index]:
-            return
-        
-        self.board[row_index][column_index] = Piece(column_index * self.line_gap + self.x, row_index * self.line_gap + self.y, 0 if self.black_color else 255) # Places the new piece.
-        self.black_color = not self.black_color   # Changes the color to the opposite.
-    
-    
-    # Prints out the board, duh! For debugging purposes.
-    def print_board(self):
-        print("------------------------------------------------")
-        for row in self.board:
-            row_str = ""
-            for cell in row:
-                if cell == None:
-                    row_str = " ".join([row_str, "0"])
+        for col_points in self.board:
+            for point in col_points:
+                if point.type is not Point.EMPTY or (point.x, point.y) in checked_points:
                     continue
+       
+                # Get the group
+                group = self.find_group_from_point(point)
+                liberties = self.find_liberties(group)
+
+                # Check if the liberties contain only black or only whites
+                has_found_white = False
+                has_found_black = False
+                for liberty in liberties:
+                    if liberty.type == Point.BLACK:
+                        has_found_black = True
+                        if has_found_white:
+                            break
+                    elif liberty.type == Point.WHITE:
+                        has_found_white = True
+                        if has_found_black:
+                            break
                 
-                if cell.colour == 0:
-                    row_str = " ".join([row_str, "1"])
-                    continue
-                else:
-                    row_str = " ".join([row_str, "2"])
-                    continue
-            print(row_str)
-        print("------------------------------------------------")
+                # Calculate a score based on found pieces
+                if has_found_black and not has_found_white:
+                    score_black += len(group)
+                    indices = np.array([[p.x, p.y] for p in group])
+                    score_board[tuple(indices.transpose())] = Point.BLACK
+                elif not has_found_black and has_found_white:
+                    score_white += len(group)
+                    indices = np.array([[p.x, p.y] for p in group])
+                    score_board[tuple(indices.transpose())] = Point.WHITE
+                
+                # Mark group as found
+                for group_point in group:
+                    checked_points[(group_point.x, group_point.y)] = True
+        
+                
+
+        return score_black, score_white, score_board
+
+    def __is_valid_slot(self, x, y):
+        # Check if x and y is in the borders of the board
+        return x >= 0 or x < self.size or y >= 0 or y < self.size
+
+    @staticmethod
+    def board_to_string(board):
+        output = ''
+        is_point = isinstance(board[0, 0], Point)
+        size = len(board)
+        for col in range(0, size):
+            for row in range(0, size):
+                value = board[row, col].type if is_point else board[row, col]
+                output += f'{int(value)}, '
+            output += '\n'
+        return output
+
+    def __str__(self):
+        return Board.board_to_string(board=self.board)
+    
