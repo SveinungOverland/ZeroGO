@@ -14,7 +14,7 @@ board_x = 50
 board_y = 50
 board_width = 500
 board_height = 500
-dimension = 9
+dimension = 5
 line_gap = board_width / dimension
 
 board = BoardView(screen, board_x, board_y, board_width, board_height, dimension=dimension)
@@ -35,12 +35,15 @@ while running:
 
             row = actual_y // line_gap
             column = actual_x // line_gap
-            board.move_shadow(row=row, column=column)
+
+            if row >= 0 and row < dimension and column >= 0 and column < dimension:
+                board.move_shadow(row=row, column=column)
         elif event.type == pygame.MOUSEBUTTONUP:
             row, column = board.shadow_piece
             row = int(row)
             column = int(column)
-            board.place_piece(row, column)
+            if row >= 0 and row < dimension and column >= 0 and column < dimension:
+                board.place_piece(row, column)
 
 
     screen.fill((0, 0, 0))

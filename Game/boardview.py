@@ -16,7 +16,7 @@ class BoardView:
         self.shadow_piece = (int(dimension // 2), int(dimension // 2))
         self.line_gap = width / dimension
 
-        self.radius = 20
+        self.radius = int(self.line_gap / 2.2)
 
         self.is_black = True
 
@@ -31,14 +31,16 @@ class BoardView:
             pygame.draw.line(self.screen, (0, 0, 0), (i * self.line_gap + self.x, self.y), (i * self.line_gap + self.x, self.y + self.height - self.line_gap), 2) # Vertical
 
 
-        piece_color = (0, 0, 0) if self.is_black else (255, 255, 255)
+        piece_color = (0, 0, 0, 100) if self.is_black else (255, 255, 255, 100)
 
         #Render shadow piece
         row, col = self.shadow_piece
         x_pos = int(self.x + col * self.line_gap)
         y_pos = int(self.y + row * self.line_gap)
-        pygame.draw.circle(self.screen, (piece_color), (x_pos, y_pos), self.radius)
+        pygame.draw.circle(self.screen, (piece_color), (x_pos, y_pos), int(self.radius - self.radius / 5))
 
+
+        # Render all pieces.
         for row_index, row in enumerate(self.board):
             for col_index, col in enumerate(row):
                 if col == 1:
@@ -55,8 +57,6 @@ class BoardView:
     def place_piece(self, row, column):
         #self.board[row, column] = value
         status = self.go.make_move(row, column)
-        print("History Length:", len(self.go.history))
-        print(status)
         self.board = self.go.get_board()
 
         self.is_black = self.go.get_current_turn() == 1
