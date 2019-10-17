@@ -119,6 +119,14 @@ class Go:
     def __store_move(self, player, x, y):
         self.moves.append((player, x, y))
 
+    def get_board(self, raw=True):
+        board = self.board.board
+
+        if raw:
+            return np.array([[y.type for y in x]for x in board])
+
+        return board
+
     def __pop(self):
         '''
             Makes the game go back to the previous state (the previous turn)
@@ -185,3 +193,5 @@ print(Board.board_to_string(score_board))
 
 print("Black stones captured:", game.captured_whites)
 print("White stones captured:", game.captured_blacks)
+
+print(game.get_board())
