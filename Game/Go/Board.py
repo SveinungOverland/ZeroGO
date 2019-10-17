@@ -1,5 +1,5 @@
 import numpy as np
-from point import Point
+from Go.point import Point
 
 class Board:
 

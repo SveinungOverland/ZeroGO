@@ -1,5 +1,5 @@
-from board import Board
-from point import Point
+from Go.board import Board
+from Go.point import Point
 
 import copy
 import numbers
@@ -44,15 +44,20 @@ class Go:
         self.__player_turn = Point.BLACK if self.__player_turn == Point.WHITE else Point.WHITE
 
     def __make_move(self, player, x, y):
+        # Add a deep copy of the board to history
+        self.history.append(copy.deepcopy(self.board.board))
+        self.__store_move(player, x, y)
+
         # Make move
-        board, point = self.board.make_move(player, x, y)
+        board, current_point = self.board.make_move(player, x, y)
         if isinstance(board, numbers.Number):
             # Something went wrong, return error code (board)
+            self.__revert()
             return board
 
         # Check for capturing
-        opponent = point.opponent()
-        opponent_points = point.get_neighbours(board=board, point_type=opponent)
+        opponent = current_point.opponent()
+        opponent_points = current_point.get_neighbours(board=board, point_type=opponent)
         found = {} # A dict to keep track of which points have been checked
         captured_stones = 0
         for point in opponent_points:
@@ -73,17 +78,19 @@ class Go:
                 
 
         # Check for self-capture
+        print("Captured_stones:", captured_stones)
         if captured_stones == 0:
-            group = self.board.find_group_from_point(point)
+            group = self.board.find_group_from_point(current_point)
             was_captured = self.board.check_group_for_capture(group)
+            print("Was captured", was_captured)
             if was_captured:
                 # If was captured, reset the board. This is an illegal move
-                self.__pop()
+                self.__revert()
                 return Go.ERROR_SELF_CAPTURE
 
         # Check for KO
-        if self.__is_move_ko(player, x, y):
-            self.__pop()
+        if self.__is_move_ko():
+            self.__revert()
             return Go.ERROR_KO
 
         # Update captured stones statistics
@@ -92,21 +99,13 @@ class Go:
         else:
             self.captured_whites += captured_stones
 
-        # Add a deep copy of the board to history
-        self.history.append(copy.deepcopy(self.board.board))
-        self.__store_move(player, x, y)
-
         return Go.VALID_MOVE
         
-    def __is_move_ko(self, player, x, y):
+    def __is_move_ko(self):
         # Can not be KO if there has not been more than 2 moves yet
-        if len(self.moves) <= 1:
+        if len(self.history) <= 1:
             return False
 
-        # Can not be KO if the player does not repeats it's move
-        if self.moves[-2][1] != x and self.moves[-2][2] != y:
-            return False
-        
         # The player has repeated it's move. Check if the board from two steps ago is equal to current board
         prev_board = self.history[-2]
         for i, x in enumerate(prev_board):
@@ -127,71 +126,83 @@ class Go:
 
         return board
 
-    def __pop(self):
+    def get_current_turn(self):
+        return self.__player_turn
+
+    def get_score(self):
+        score_black, score_white, score_board = self.board.calculate_score()
+
+        temp = self.board.board.reshape(1, self.board.size*self.board.size)
+        white_stones = len(list(filter(lambda x: x.type == Point.WHITE, temp)))
+        black_stones = len(list(filter(lambda x: x.type == Point.BLACK, temp)))
+
+        return score_black + black_stones, score_white + white_stones, score_board
+
+
+    def __revert(self):
         '''
             Makes the game go back to the previous state (the previous turn)
         '''
         self.board.board = self.history.pop()
-        self.moves = self.moves[:-1]
 
     def __str__(self):
         return str(self.board)
 
 
-game = Go(7)
-
-print(game)
-
-
-
-print(game.make_move( 1, 0))
-print(game.make_move( 2, 0))
-print(game.make_move( 3, 0))
-print(game.make_move( 4, 0))
-
-print(game)
-
-print(game.make_move( 0, 0))
-print(game)
-print(game.make_move( 1, 1))
-print(game)
-print(game.make_move( 2, 1))
-print(game)
-print(game.make_move( 3, 1))
-print(game)
-print(game.make_move( 4, 1))
-print(game)
-print(game.make_move( 5, 0))
-print(game)
-
-print(game.make_move( 5, 5))
-print(game.make_move( 3, 5))
-print(game.make_move( 4, 4))
-print(game.make_move( 4, 6))
-print(game)
-
-import time
-
-black, white, score_board = game.board.calculate_score()
-
-print("Score:")
-print(black, white)
-print(Board.board_to_string(score_board))
-
-print(game.make_move( 2, 5))
-print(game.make_move( 3, 4))
-print(game.make_move( 3, 6))
-print(game)
-print(game.make_move( 4, 5))
-print(game)
-print(game.make_move( 3, 5))
-print(game)
-
-print("Score:")
-print(black, white)
-print(Board.board_to_string(score_board))
-
-print("Black stones captured:", game.captured_whites)
-print("White stones captured:", game.captured_blacks)
-
-print(game.get_board())
+# game = Go(7)
+#
+# print(game)
+#
+#
+#
+# print(game.make_move( 1, 0))
+# print(game.make_move( 2, 0))
+# print(game.make_move( 3, 0))
+# print(game.make_move( 4, 0))
+#
+# print(game)
+#
+# print(game.make_move( 0, 0))
+# print(game)
+# print(game.make_move( 1, 1))
+# print(game)
+# print(game.make_move( 2, 1))
+# print(game)
+# print(game.make_move( 3, 1))
+# print(game)
+# print(game.make_move( 4, 1))
+# print(game)
+# print(game.make_move( 5, 0))
+# print(game)
+#
+# print(game.make_move( 5, 5))
+# print(game.make_move( 3, 5))
+# print(game.make_move( 4, 4))
+# print(game.make_move( 4, 6))
+# print(game)
+#
+# import time
+#
+# black, white, score_board = game.board.calculate_score()
+#
+# print("Score:")
+# print(black, white)
+# print(Board.board_to_string(score_board))
+#
+# print(game.make_move( 2, 5))
+# print(game.make_move( 3, 4))
+# print(game.make_move( 3, 6))
+# print(game)
+# print(game.make_move( 4, 5))
+# print(game)
+# print(game.make_move( 3, 5))
+# print(game)
+#
+# print("Score:")
+# print(black, white)
+# print(Board.board_to_string(score_board))
+#
+# print("Black stones captured:", game.captured_whites)
+# print("White stones captured:", game.captured_blacks)
+#
+# print(game.get_board())
