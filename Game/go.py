@@ -35,12 +35,15 @@ while running:
 
             row = actual_y // line_gap
             column = actual_x // line_gap
-            board.move_shadow(row=row, column=column)
+
+            if row >= 0 and row < dimension and column >= 0 and column < dimension:
+                board.move_shadow(row=row, column=column)
         elif event.type == pygame.MOUSEBUTTONUP:
             row, column = board.shadow_piece
             row = int(row)
             column = int(column)
-            board.place_piece(row, column)
+            if row >= 0 and row < dimension and column >= 0 and column < dimension:
+                board.place_piece(row, column)
 
 
     screen.fill((0, 0, 0))
