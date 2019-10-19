@@ -13,10 +13,6 @@ class Go:
 
     VALID_MOVE = 0
 
-    TURNS = {
-
-    }
-
     def __init__(self, size):
         self.board = Board(size)
         self.history = [] # Board.board
