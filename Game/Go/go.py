@@ -1,4 +1,4 @@
-from Go.board import Board
+from Go.Board import Board
 from Go.point import Point
 
 import copy
@@ -74,11 +74,9 @@ class Go:
                 
 
         # Check for self-capture
-        print("Captured_stones:", captured_stones)
         if captured_stones == 0:
             group = self.board.find_group_from_point(current_point)
             was_captured = self.board.check_group_for_capture(group)
-            print("Was captured", was_captured)
             if was_captured:
                 # If was captured, reset the board. This is an illegal move
                 self.__revert()
