@@ -37,7 +37,7 @@ class MCTS:
         state = node.state
 
         while not done:
-            state, done = self.enviroment.simulate(state, neural_network.find_best_action(state))
+            state, done = self.enviroment.simulate(state, self.neural_network.find_best_action(state))
         win = self.enviroment.find_winner(state) == self.player_id
 
         self.back_propagation(node, win)
@@ -66,9 +66,4 @@ class MCTS:
                 self.rollout(node)
             else:
                 node.children = [Node(action= action, state= state, parent= node) for (action, state) in self.enviroment.get_action_space(node.state)] #expanding node with all the posible actions and states.
-                self.rollout(choose_node(node))
-
-            
-            
-
-
+                self.rollout(self.choose_node(node))
