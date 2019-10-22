@@ -41,8 +41,6 @@ class MCTS:
         win = self.enviroment.find_winner() == self.player_id
         self.back_propagation(node, win)
         
-
-
     def back_propagation(self, node, win):
         # reach the root node
         if(node == None):
