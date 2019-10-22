@@ -70,6 +70,33 @@ def execute_move(state, action, history=None):
 
     return board, VALID_MOVE
 
+
+def all_possible_moves(state, player):
+    """
+        Calculates all possible moves given a state (board) and a player (color). 
+        It returns a list with all possible moves with the corresponding state (board) it produces. 
+
+        State = np.ndarray (n x n)
+        Player = int -> either 0 (empty), 1 (black) or 2 (white)        
+    """
+    oponent = BLACK if player == WHITE else WHITE
+    board = state.copy()
+
+    valid_moves = []
+    
+    for row_index, row in enumerate(board):
+        for col_index, col in enumerate(row):
+            if col != EMPTY: continue
+
+            new_state, status = execute_move(board, (player, row_index, col_index))
+            if status == VALID_MOVE:
+                valid_moves.append((row_index, col_index, new_state))
+    
+    
+    return valid_moves
+    
+
+
 def capture_group(board, group):
     '''
         Checks if the group is captured and if so removes the group from the given board
