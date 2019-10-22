@@ -1,8 +1,10 @@
 import numpy as np
+from typing import Tuple
 
 EMPTY = 0
 BLACK = 1
 WHITE = 2
+TIE = 3
 
 VALID_MOVE = 200
 ERROR_INVALID_MOVE = 500
@@ -201,7 +203,10 @@ def get_neighbours(board, x, y, point_type=None):
     return np.array(neighbours)
 
 def get_opponent(board, x, y):
-    return BLACK if board[x,y] == WHITE else WHITE
+    return opponent(board[x,y])
+
+def opponent(player):
+    return BLACK if player == WHITE else WHITE
 
 def is_within_bounds(board, x, y):
     # Check if x and y is in the borders of the board
