@@ -8,7 +8,7 @@ def test_execute_move():
         [2, 2, 0, 0],
         [2, 1, 2, 0],
         [2, 1, 1, 1],
-        [0, 2, 1, 2],
+        [0, 2, 1, 1],
     ])
 
     newBoard, status = execute_move(board, (2, 0, 2), history=[])
@@ -19,7 +19,7 @@ def test_execute_move():
         [2, 2, 2, 0],
         [2, 1, 2, 0],
         [2, 1, 1, 1],
-        [0, 2, 1, 2],
+        [0, 2, 1, 1],
     ])
 
     assert np.array_equal(newBoard, expected)
@@ -29,7 +29,7 @@ def test_execute_move_with_capture():
         [2, 2, 0, 0],
         [2, 1, 2, 0],
         [2, 1, 1, 1],
-        [0, 2, 1, 2],
+        [0, 2, 1, 1],
     ])
 
     newBoard, status = execute_move(board, (2, 1, 3), history=[])
@@ -40,7 +40,7 @@ def test_execute_move_with_capture():
         [2, 2, 0, 0],
         [2, 0, 2, 2],
         [2, 0, 0, 0],
-        [0, 2, 0, 2],
+        [0, 2, 0, 0],
     ])
 
     assert np.array_equal(newBoard, expected)
