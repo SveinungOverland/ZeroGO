@@ -1,9 +1,9 @@
-# to Anders with love
-
-
+from Go.go import *
+# to Anders with love 
 
 class Enviroment:
     def __init__(self):
+        print("Hell yeah! :D ")
         pass
 
     def simulate(self, state, action)

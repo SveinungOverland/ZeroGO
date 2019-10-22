@@ -73,8 +73,6 @@ class Game:
 
 # print(game)
 
-
-
 # print(game.make_move( 1, 0))
 # print(game.make_move( 2, 0))
 # print(game.make_move( 3, 0))
