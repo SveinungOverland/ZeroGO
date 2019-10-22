@@ -1,6 +1,6 @@
 import pygame
 import numpy as np
-from Go.go import Go
+from Go.game import Game
 
 class BoardView:
     def __init__(self, screen, x, y, width, height, dimension=9):
@@ -11,7 +11,7 @@ class BoardView:
 
         self.dimension = dimension
         #self.board = np.zeros([dimension, dimension])
-        self.go = Go(dimension)
+        self.go = Game(dimension)
         self.board = self.go.get_board()
         self.shadow_piece = (int(dimension // 2), int(dimension // 2))
         self.line_gap = width / dimension
