@@ -1,5 +1,6 @@
 from MonteCarlo.node import Node
 import numpy as np
+import random
 """
 Selection — you start in the root — the state, and select a child — a move. 
     I used the upper confident bound (UCB1) to select a child.
@@ -17,7 +18,6 @@ Simulation — play random simulation until the game is over.
 Back propagation — back propagate to all the visited nodes, increase by 1
     the visit number and if you win, increase by 1 the winning number.
 """
-
 """
 enviroment consist of simulate, flatten
 NN consists of train
@@ -25,14 +25,34 @@ NN consists of train
 class MCTS:
     # add the enviroment that the MCTS is going to train on
     # add the neural_network, This network is created ahead, instead of created here. s
-    def __init__(self, enviroment, neural_network, player_id):
+    def __init__(self,  enviroment, neural_network, player_id: int, steps: int = 1600, c: float = 1.0):
         self.enviroment = enviroment
         self.neural_network = neural_network
-        self.root_node = Node(None, None, None)
+        self.root_node = self.Node(None, None, None)
         self.player_id = player_id
+        self.steps = steps
+        self.c = c
 
-    #self.enviroment.simulate(state, action)
-    def rollout(self, node):
+    def pick_action(self, state):
+        
+        for _ in range(self.steps):
+            self.tree_search(self.root_node)
+
+        # Getting the total visits of  all the child nodes.
+        total_visits = sum([child.visits for child in self.root_node.children])
+
+        action_space = []
+        for child in self.root_node:
+            Q = child.wins/child.visits
+
+            action_space.append()
+
+        new_action = self.neural_network.select_action(self.root_node.state)
+        return new_action
+
+        
+        
+    def rollout(self, node: Node):
         done = node.terminate
         state = node.state
 
@@ -42,7 +62,7 @@ class MCTS:
 
         self.back_propagation(node, win)
         
-    def back_propagation(self, node, win):
+    def back_propagation(self, node: Node, win: bool ) :
         # reach the root node
         if(node == None):
             return
@@ -50,20 +70,32 @@ class MCTS:
         node.winning(win)
         self.back_propagation(node.parent, win)
 
-    def choose_node(self, node):
+    def choose_node(self, node: Node):
         if node.state[0] == self.player_id:
             return np.array(node.UCB1(False) for node in node.children).argmax()
         else:
             return np.array(node.UCB1(True) for node in node.children).argmin()
 
     # assume that the state says who is playing, if its friendly or evil opponent
-    def tree_search(self, node):
+    def tree_search(self, node: Node):
         if node.children:
             self.tree_search(self.choose_node(node))
         else:
             # hit leaf_node. Expand this node.
             if node.visits >= 0: 
+                # the node has no visits and need rollout
                 self.rollout(node)
             else:
+                # Node has been visited and expands for all under
                 node.children = [Node(action= action, state= state, parent= node) for (action, state) in self.enviroment.get_action_space(node.state)] #expanding node with all the posible actions and states.
-                self.rollout(self.choose_node(node))
+                self.rollout(choose_node(node))
+
+
+    def train(self, training_steps: int):
+        for i in range(training_steps):
+            state = self.enviroment.new_game(i % 2)
+            done = False
+            while not done:
+                action = pick_action(state)
+                done, state = self.enviroment.simulate(state, action)
+            winner = self.enviroment.calculate_winner(state)
