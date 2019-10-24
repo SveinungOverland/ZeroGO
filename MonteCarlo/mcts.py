@@ -1,6 +1,7 @@
 from MonteCarlo.node import Node
 import numpy as np
 import random
+from math import sqrt
 """
 Selection — you start in the root — the state, and select a child — a move. 
     I used the upper confident bound (UCB1) to select a child.
@@ -25,32 +26,35 @@ NN consists of train
 class MCTS:
     # add the enviroment that the MCTS is going to train on
     # add the neural_network, This network is created ahead, instead of created here. s
-    def __init__(self,  enviroment, neural_network, player_id: int, steps: int = 1600, c: float = 1.0):
+    def __init__(self,  enviroment, neural_network, player_id: int, steps: int = 1600, c: float = 1.0, tau: float = 1.2):
         self.enviroment = enviroment
         self.neural_network = neural_network
         self.root_node = self.Node(None, None, None)
         self.player_id = player_id
         self.steps = steps
         self.c = c
+        self.tau = tau
+
 
     def pick_action(self, state):
-        
         for _ in range(self.steps):
             self.tree_search(self.root_node)
 
+        action_space = []
+        value = 0
         # Getting the total visits of  all the child nodes.
         total_visits = sum([child.visits for child in self.root_node.children])
 
-        action_space = []
         for child in self.root_node:
-            Q = child.wins/child.visits
+            # can try to add all of them into a 9x9 matrix representing what we would get.
+            val =  self.stochasticly(child.visits, total_visits)
+            if val > value:
+                value = val
+                new_action = child.action
 
             action_space.append()
-
-        new_action = self.neural_network.select_action(self.root_node.state)
+    
         return new_action
-
-        
         
     def rollout(self, node: Node):
         done = node.terminate
@@ -99,3 +103,8 @@ class MCTS:
                 action = pick_action(state)
                 done, state = self.enviroment.simulate(state, action)
             winner = self.enviroment.calculate_winner(state)
+
+ # In trainning we want to add intelegent randomness and therefore use stochastic functions         
+    def stochasticly(self, target_node: int, node_sum: int) -> float:
+        return target_node**(1/self.tau) / node_sum**(1/self.tau)
+
