@@ -73,7 +73,7 @@ def execute_move(state, action, history=None):
     return board, VALID_MOVE
 
 
-def all_possible_moves(state, player):
+def all_possible_moves(state, player, history=None):
     """
         Calculates all possible moves given a state (board) and a player (color). 
         It returns a list with all possible moves with the corresponding state (board) it produces. 
@@ -89,7 +89,7 @@ def all_possible_moves(state, player):
         for col_index, col in enumerate(row):
             if col != EMPTY: continue
 
-            new_state, status = execute_move(board, (player, row_index, col_index))
+            new_state, status = execute_move(board, (player, row_index, col_index), history=history)
             if status == VALID_MOVE:
                 valid_moves.append(((row_index, col_index), new_state))
     
