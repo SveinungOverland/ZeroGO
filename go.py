@@ -2,6 +2,7 @@
 import pygame
 pygame.init()
 from Go.game import Game
+from Go.enviroment import Enviroment
 
 class BoardView:
     def __init__(self, screen, x, y, width, height, dimension=9):
