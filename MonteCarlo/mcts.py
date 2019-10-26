@@ -1,4 +1,5 @@
 from MonteCarlo.node import Node
+from MonteCarlo.buffer import Buffer
 import numpy as np
 import random
 from math import sqrt
@@ -29,19 +30,22 @@ class MCTS:
     def __init__(self,  enviroment, neural_network, player_id: int, steps: int = 1600, c: float = 1.0, tau: float = 1.2):
         self.enviroment = enviroment
         self.neural_network = neural_network
+        self.buffer = Buffer()
         self.root_node = self.Node(None, None, None)
         self.player_id = player_id
-        self.steps = steps
         self.c = c
         self.tau = tau
+        self.steps = steps
 
 
     def pick_action(self, state):
+
         for _ in range(self.steps):
             self.tree_search(self.root_node)
 
         action_space = []
         value = 0
+
         # Getting the total visits of  all the child nodes.
         total_visits = sum([child.visits for child in self.root_node.children])
 
@@ -53,7 +57,8 @@ class MCTS:
                 new_action = child.action
 
             action_space.append(val)
-            
+        
+        self.buffer.remember_upper_conf((self.root_node.state, action_space))
         return new_action
         
     def rollout(self, node: Node):
@@ -65,6 +70,7 @@ class MCTS:
         win = self.enviroment.find_winner(state) == self.player_id
 
         self.back_propagation(node, win)
+
         
     def back_propagation(self, node: Node, win: bool):
         # reach the root node
@@ -77,7 +83,7 @@ class MCTS:
     #chooses a node based on PUCT
     def choose_node(self, node: Node):
         total_visits = sum(child.visits for child in node.children)
-        neural_policy = self.neural_network.find_policy(node.state) # takes in the states and gives all policy values.
+        neural_policy, naural_value = self.neural_network.find_policy(node.state) # takes in the states and gives all policy values.
         # Med denne naural_network så er den i samme rekkefølge som barna, dette kan bli veldig fort feil.
 
         # Filter illegal moves from neural_policy
@@ -100,7 +106,7 @@ class MCTS:
             self.tree_search(self.choose_node(node))
         else:
             # hit leaf_node. Expand this node.
-            if node.visits >= 0: 
+            if node.visits == 0: 
                 # the node has no visits and need rollout
                 self.rollout(node)
             else:
