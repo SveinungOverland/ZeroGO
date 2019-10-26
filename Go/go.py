@@ -22,7 +22,6 @@ def execute_move(state, action, history=None):
     """
     player, x, y = action
     opponent = BLACK if player == WHITE else WHITE
-    size = len(state)
 
     # Check if the action is within the bounds
     if not is_within_bounds(state, x, y):
@@ -220,7 +219,7 @@ def is_move_ko(board, x, y, history):
     # The player has repeated it's move. Check if the board from two steps ago is equal to current board
     prev_board = history[-2]
     for i, row in enumerate(prev_board):
-        for j, col in enumerate(row):
+        for j, _ in enumerate(row):
             if prev_board[i, j] != board[i, j]:
                 return False
 
