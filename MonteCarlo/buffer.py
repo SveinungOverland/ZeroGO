@@ -7,4 +7,4 @@ class Buffer():
 
     #Save the state and policy-values
     def remember_upper_conf(self,state, probabilites):
-        buffer[state] = probabilites
+        self.buffer[state] = probabilites
