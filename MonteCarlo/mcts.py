@@ -52,8 +52,8 @@ class MCTS:
                 value = val
                 new_action = child.action
 
-            action_space.append()
-    
+            action_space.append(val)
+            
         return new_action
         
     def rollout(self, node: Node):
@@ -66,7 +66,7 @@ class MCTS:
 
         self.back_propagation(node, win)
         
-    def back_propagation(self, node: Node, win: bool ) :
+    def back_propagation(self, node: Node, win: bool):
         # reach the root node
         if(node == None):
             return
@@ -74,11 +74,16 @@ class MCTS:
         node.winning(win)
         self.back_propagation(node.parent, win)
 
+    #chooses a node based on PUCT
     def choose_node(self, node: Node):
+        total_visits = sum(child.visits for child in node.children)
+        neural_policy = self.neural_network.find_policy(node.state) # takes in the states and gives all policy values.
+        # Med denne naural_network så er den i samme rekkefølge som barna, dette kan bli veldig fort feil.
+
         if node.state[0] == self.player_id:
-            return np.array(node.UCB1(False) for node in node.children).argmax()
+            return np.array(node.PUCT(False, total_visits, self.c, neural_policy[index]) for (index, node) in enumerate(node.children)).argmax()
         else:
-            return np.array(node.UCB1(True) for node in node.children).argmin()
+            return np.array(node.PUCT(True, total_visits, self.c, neural_policy[index]) for (index, node) in enumerate(node.children)).argmin()
 
     # assume that the state says who is playing, if its friendly or evil opponent
     def tree_search(self, node: Node):
@@ -107,4 +112,3 @@ class MCTS:
  # In trainning we want to add intelegent randomness and therefore use stochastic functions         
     def stochasticly(self, target_node: int, node_sum: int) -> float:
         return target_node**(1/self.tau) / node_sum**(1/self.tau)
-

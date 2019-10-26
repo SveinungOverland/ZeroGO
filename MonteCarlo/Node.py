@@ -31,5 +31,7 @@ class Node:
         if won:
             self.wins += 1
 
-    def UCB1(self, opponent):
-        return self.wins/(1 + self.visits) - GAMMA * sqrt(log(self.parent.visits)/(1 + self.visits)) if opponent else self.wins/(1 + self.visits) + GAMMA * sqrt(log(self.parent.visits)/(1 + self.visits))
+    def PUCT(self, opponent, total_visits, c, naural_network_policy):
+        Q = self.wins/self.visits
+        U = c * naural_network_policy * sqrt(total_visits)/self.visits
+        return Q + U if opponent else Q - U
