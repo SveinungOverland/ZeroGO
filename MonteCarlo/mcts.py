@@ -79,7 +79,6 @@ class MCTS:
         win = self.enviroment.calculate_winner(state) == self.player_id
 
         self.back_propagation(node, win)
-
         
     def back_propagation(self, node: Node, win: bool):
         # reach the root node
@@ -131,7 +130,8 @@ class MCTS:
                 state, done = self.enviroment.simulate(state, action)
             winner = self.enviroment.calculate_winner(state)
 
-    # In trainning we want to add intelegent randomness and therefore use stochastic functions         
+
+ # In trainning we want to add intelegent randomness and therefore use stochastic functions         
     def stochasticly(self, target_node: int, node_sum: int) -> float:
         return target_node**(1/self.tau) / node_sum**(1/self.tau)
 
