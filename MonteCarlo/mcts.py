@@ -1,4 +1,5 @@
 from MonteCarlo.node import Node
+from MonteCarlo.buffer import Buffer
 import numpy as np
 import random
 from math import sqrt
@@ -29,19 +30,22 @@ class MCTS:
     def __init__(self,  enviroment, neural_network, player_id: int, steps: int = 1600, c: float = 1.0, tau: float = 1.2):
         self.enviroment = enviroment
         self.neural_network = neural_network
+        self.buffer = Buffer()
         self.root_node = self.Node(None, None, None)
         self.player_id = player_id
-        self.steps = steps
         self.c = c
         self.tau = tau
+        self.steps = steps
 
 
     def pick_action(self, state):
+
         for _ in range(self.steps):
             self.tree_search(self.root_node)
 
         action_space = []
         value = 0
+
         # Getting the total visits of  all the child nodes.
         total_visits = sum([child.visits for child in self.root_node.children])
 
@@ -52,8 +56,9 @@ class MCTS:
                 value = val
                 new_action = child.action
 
-            action_space.append()
-    
+            action_space.append(val)
+        
+        self.buffer.remember_upper_conf((self.root_node.state, action_space))
         return new_action
         
     def rollout(self, node: Node):
@@ -65,8 +70,9 @@ class MCTS:
         win = self.enviroment.find_winner(state) == self.player_id
 
         self.back_propagation(node, win)
+
         
-    def back_propagation(self, node: Node, win: bool ) :
+    def back_propagation(self, node: Node, win: bool):
         # reach the root node
         if(node == None):
             return
@@ -74,11 +80,25 @@ class MCTS:
         node.winning(win)
         self.back_propagation(node.parent, win)
 
+    #chooses a node based on PUCT
     def choose_node(self, node: Node):
+        total_visits = sum(child.visits for child in node.children)
+        neural_policy, naural_value = self.neural_network.find_policy(node.state) # takes in the states and gives all policy values.
+        # Med denne naural_network så er den i samme rekkefølge som barna, dette kan bli veldig fort feil.
+
+        # Filter illegal moves from neural_policy
+        filtered_neural_policies = []
+        size = len(node.state)
+        for child in node.children:
+            x, y = child.action
+            filtered_neural_policies.append(neural_policy[x*size + y])
+            
+        
+
         if node.state[0] == self.player_id:
-            return np.array(node.UCB1(False) for node in node.children).argmax()
+            return np.array(node.PUCT(False, total_visits, self.c, filtered_neural_policies[index]) for (index, node) in enumerate(node.children)).argmax()
         else:
-            return np.array(node.UCB1(True) for node in node.children).argmin()
+            return np.array(node.PUCT(True, total_visits, self.c, filtered_neural_policies[index]) for (index, node) in enumerate(node.children)).argmin()
 
     # assume that the state says who is playing, if its friendly or evil opponent
     def tree_search(self, node: Node):
@@ -86,7 +106,7 @@ class MCTS:
             self.tree_search(self.choose_node(node))
         else:
             # hit leaf_node. Expand this node.
-            if node.visits >= 0: 
+            if node.visits == 0: 
                 # the node has no visits and need rollout
                 self.rollout(node)
             else:
@@ -107,4 +127,3 @@ class MCTS:
  # In trainning we want to add intelegent randomness and therefore use stochastic functions         
     def stochasticly(self, target_node: int, node_sum: int) -> float:
         return target_node**(1/self.tau) / node_sum**(1/self.tau)
-
