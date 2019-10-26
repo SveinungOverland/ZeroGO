@@ -29,8 +29,7 @@ class Node:
 
     def winning(self, won):
         if won:
-            self.winning += 1
+            self.wins += 1
 
     def UCB1(self, opponent):
-        return self.win/(1+self.visits) - GAMMA * sqrt(log(self.parent.visits)/(1+self.visits)) if opponent else self.win/(1+self.visits) + GAMMA * sqrt(log(self.parent.visits)/(1+self.visits))
-
+        return self.wins/(1 + self.visits) - GAMMA * sqrt(log(self.parent.visits)/(1 + self.visits)) if opponent else self.wins/(1 + self.visits) + GAMMA * sqrt(log(self.parent.visits)/(1 + self.visits))
