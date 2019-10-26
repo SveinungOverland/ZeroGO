@@ -40,13 +40,20 @@ def test_all_possible_moves():
     ])
 
     valid_moves = all_possible_moves(state=state, player=player)
+    
+    # Modifiy the structure of valid_moves
+    for i, move in enumerate(valid_moves):
+        print(move)
+        action, board = move
+        print(action)
+        valid_moves[i] = (x, y, board)
 
     print(valid_moves)
 
     actuals = assert_valid_move(valid_moves, [
-        (0, 2, expected_1),
         (0, 3, expected_2),
         (1, 3, expected_3),
+        (0, 2, expected_1),
         (3, 0, expected_4)
     ])
 

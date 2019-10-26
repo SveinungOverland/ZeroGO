@@ -27,7 +27,7 @@ NN consists of train
 class MCTS:
     # add the enviroment that the MCTS is going to train on
     # add the neural_network, This network is created ahead, instead of created here. s
-    def __init__(self,  enviroment, neural_network, player_id: int, steps: int = 1600, c: float = 1.0, tau: float = 1.2):
+    def __init__(self,  enviroment, neural_network, player_id: int, board_size: int = 5, steps: int = 1600, c: float = 1.0, tau: float = 1.2):
         self.enviroment = enviroment
         self.neural_network = neural_network
         self.buffer = Buffer()
@@ -36,6 +36,7 @@ class MCTS:
         self.c = c
         self.tau = tau
         self.steps = steps
+        self.board_size = board_size
 
 
     def pick_action(self, state):
@@ -66,7 +67,8 @@ class MCTS:
         state = node.state
 
         while not done:
-            state, done = self.enviroment.simulate(state, self.neural_network.find_best_action(state))
+            value, policy = self.neural_network.find_best_action(state)
+            state, done = self.enviroment.simulate(state, self.__index_to_action(np.argmax(policy)))
         win = self.enviroment.find_winner(state) == self.player_id
 
         self.back_propagation(node, win)
@@ -93,8 +95,6 @@ class MCTS:
             x, y = child.action
             filtered_neural_policies.append(neural_policy[x*size + y])
             
-        
-
         if node.state[0] == self.player_id:
             return np.array(node.PUCT(False, total_visits, self.c, filtered_neural_policies[index]) for (index, node) in enumerate(node.children)).argmax()
         else:
@@ -117,13 +117,16 @@ class MCTS:
 
     def train(self, training_steps: int):
         for i in range(training_steps):
-            state = self.enviroment.new_game(i % 2)
+            state = self.enviroment.new_game(self.board_size)
             done = False
             while not done:
                 action = pick_action(state)
-                done, state = self.enviroment.simulate(state, action)
+                state, done = self.enviroment.simulate(state, self.__index_to_action(np.argmax(state)))
             winner = self.enviroment.calculate_winner(state)
 
  # In trainning we want to add intelegent randomness and therefore use stochastic functions         
     def stochasticly(self, target_node: int, node_sum: int) -> float:
         return target_node**(1/self.tau) / node_sum**(1/self.tau)
+
+    def __index_to_action(self, index):
+        return (index // self.size, index % self.size)
