@@ -43,9 +43,8 @@ def test_all_possible_moves():
     
     # Modifiy the structure of valid_moves
     for i, move in enumerate(valid_moves):
-        print(move)
         action, board = move
-        print(action)
+        x, y = action
         valid_moves[i] = (x, y, board)
 
     print(valid_moves)
