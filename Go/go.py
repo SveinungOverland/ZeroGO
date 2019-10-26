@@ -81,7 +81,6 @@ def all_possible_moves(state, player):
         State = np.ndarray (n x n)
         Player = int -> either 0 (empty), 1 (black) or 2 (white)        
     """
-    oponent = BLACK if player == WHITE else WHITE
     board = state.copy()
 
     valid_moves = []
@@ -92,7 +91,7 @@ def all_possible_moves(state, player):
 
             new_state, status = execute_move(board, (player, row_index, col_index))
             if status == VALID_MOVE:
-                valid_moves.append((row_index, col_index, new_state))
+                valid_moves.append(((row_index, col_index), new_state))
     
     
     return valid_moves

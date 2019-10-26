@@ -31,7 +31,7 @@ class MCTS:
         self.enviroment = enviroment
         self.neural_network = neural_network
         self.buffer = Buffer()
-        self.root_node = self.Node(None, None, None)
+        self.root_node = Node(None, None, None)
         self.player_id = player_id
         self.c = c
         self.tau = tau
@@ -49,7 +49,7 @@ class MCTS:
         # Getting the total visits of  all the child nodes.
         total_visits = sum([child.visits for child in self.root_node.children])
 
-        for child in self.root_node:
+        for child in self.root_node.children:
             # can try to add all of them into a 9x9 matrix representing what we would get.
             val =  self.stochasticly(child.visits, total_visits)
             if val > value:
@@ -58,7 +58,7 @@ class MCTS:
 
             action_space.append(val)
         
-        self.buffer.remember_upper_conf((self.root_node.state, action_space))
+        self.buffer.remember_upper_conf(self.root_node.state, action_space)
         return new_action
         
     def rollout(self, node: Node):
@@ -83,7 +83,7 @@ class MCTS:
     #chooses a node based on PUCT
     def choose_node(self, node: Node):
         total_visits = sum(child.visits for child in node.children)
-        neural_policy, naural_value = self.neural_network.find_policy(node.state) # takes in the states and gives all policy values.
+        neural_policy, _ = self.neural_network.find_policy(node.state) # takes in the states and gives all policy values.
         # Med denne naural_network så er den i samme rekkefølge som barna, dette kan bli veldig fort feil.
 
         # Filter illegal moves from neural_policy
@@ -112,7 +112,7 @@ class MCTS:
             else:
                 # Node has been visited and expands for all under
                 node.children = [Node(action= action, state= state, parent= node) for (action, state) in self.enviroment.get_action_space(node.state)] #expanding node with all the posible actions and states.
-                self.rollout(choose_node(node))
+                self.rollout(self.choose_node(node))
 
 
     def train(self, training_steps: int):
@@ -120,7 +120,7 @@ class MCTS:
             state = self.enviroment.new_game(i % 2)
             done = False
             while not done:
-                action = pick_action(state)
+                action = self.pick_action(state)
                 done, state = self.enviroment.simulate(state, action)
             winner = self.enviroment.calculate_winner(state)
 
