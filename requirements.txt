@@ -1,9 +1,5 @@
 
 
 numpy == 1.17.3
-numbers == *
-copy == *
 tensorflow == 2.0
-typing == *
-random == *
 pygame == 1.9.6
