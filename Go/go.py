@@ -22,7 +22,6 @@ def execute_move(state, action, history=None):
     """
     player, x, y = action
     opponent = BLACK if player == WHITE else WHITE
-    size = len(state)
 
     # Check if the action is within the bounds
     if not is_within_bounds(state, x, y):
@@ -81,7 +80,6 @@ def all_possible_moves(state, player, history=None):
         State = np.ndarray (n x n)
         Player = int -> either 0 (empty), 1 (black) or 2 (white)        
     """
-    oponent = BLACK if player == WHITE else WHITE
     board = state.copy()
 
     valid_moves = []
@@ -92,7 +90,7 @@ def all_possible_moves(state, player, history=None):
 
             new_state, status = execute_move(board, (player, row_index, col_index), history=history)
             if status == VALID_MOVE:
-                valid_moves.append((row_index, col_index, new_state))
+                valid_moves.append(((row_index, col_index), new_state))
     
     
     return valid_moves
@@ -221,7 +219,7 @@ def is_move_ko(board, x, y, history):
     # The player has repeated it's move. Check if the board from two steps ago is equal to current board
     prev_board = history[-2]
     for i, row in enumerate(prev_board):
-        for j, col in enumerate(row):
+        for j, _ in enumerate(row):
             if prev_board[i, j] != board[i, j]:
                 return False
 
