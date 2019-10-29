@@ -40,7 +40,9 @@ class MCTS:
 
 
     def pick_action(self, state):
-
+        if state.player_id[0] == self.player_id:
+            self.root_node = Node(None, None, None)
+        
         for _ in range(self.steps):
             self.tree_search(self.root_node)
 
@@ -56,10 +58,12 @@ class MCTS:
             if val > value:
                 value = val
                 new_action = child.action
+                self.root_node = child
 
             action_space.append(val)
         
         self.buffer.remember_upper_conf(self.root_node.state, action_space)
+
         return new_action
         
     def rollout(self, node: Node):
@@ -122,6 +126,8 @@ class MCTS:
         for i in range(training_steps):
             state = self.enviroment.new_game(self.board_size)
             done = False
+
+            self.enviroment.set_player(1)
             while not done:
                 action = self.pick_action(state)
                 state, done = self.enviroment.simulate(state, action, self.history_size)
@@ -134,24 +140,6 @@ class MCTS:
 
     def __index_to_action(self, index):
         return (index // self.board_size, index % self.board_size)
-
+        
     def __append_state(self, state, board):
         return np.append(state, board.reshape(1, self.board_size, self.board_size))
-
-    def __history_to_nn_input(self, state: np.array, player, N=7):
-        """
-            Converts an array of states to the format 1x5x5xN.
-            GPU: 1xNx5x5
-            CPU: 1x5x5x7
-
-            If history-input does not have N/2 records, the output will be padded with zeros.
-            The last 5x5 board determines the player
-        """
-        # TODO: Implement this method
-        pass
-
-    def __loss(self, policy, value, z : float, v: int, pi : vektor, p: vektor, c : int,  ):
-        """
-            l = (z - v)^2 - π^(T)*log(p) + c*||θ^2||
-        """
-        
