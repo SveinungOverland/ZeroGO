@@ -136,7 +136,7 @@ class MCTS:
         return target_node**(1/self.tau) / node_sum**(1/self.tau)
 
     def __index_to_action(self, index):
-        return (index // self.size, index % self.size)
+        return (index // self.board_size, index % self.board_size)
 
     def __history_to_nn_input(self, history, player, N=7):
         """
