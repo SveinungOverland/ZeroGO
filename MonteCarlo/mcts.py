@@ -36,7 +36,9 @@ class MCTS:
         self.c = c
         self.tau = tau
         self.steps = steps
-        self.board_size = board_size
+
+        self.board_size = board_size # The size of the board, for example nxn
+        self.history_size = history_size
 
 
     def pick_action(self, state):

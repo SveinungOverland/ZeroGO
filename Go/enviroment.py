@@ -81,23 +81,18 @@ class Enviroment:
         size = len(state[-1])
         return (max_index // size, max_index % size)
 
-    @staticmethod
-    def generate_random_play(state):
-        env = Enviroment()
-        
+    def random_play(self, state, state_limit=3):
         done = False
-        board = state.copy()
+        history = state.copy()
         while not done:
             
-            moves = env.get_action_space(board)
+            moves = self.get_action_space(history)
             if len(moves) == 0:
                 done = True
                 continue
             move = moves[random.randint(0, len(moves) - 1)]
             move_x, move_y = move[0]
-            board, done = env.simulate(board, (move_x, move_y))
-            print(board[-1])
-
+            history, done = self.simulate(history, (move_x, move_y), state_limit=state_limit)
         return env.calculate_winner(board)
 
 env = Enviroment()
