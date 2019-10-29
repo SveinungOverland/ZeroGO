@@ -10,7 +10,7 @@ class Adapter:
         """
             l = (z - v)^2 - π^(T)*log(p) + c*||θ^2||
         """
-        return (z - v) ** 2 - pi.transpose().dot(p)[0] + self.c * np.linalg.norm(theta)
+        return (z - v) ** 2 - pi.transpose().dot(np.log10(p))[0] + self.c * np.linalg.norm(theta)
 
 
     def history_to_nn_input(self, state: np.array, player: int, N: int) -> np.array:
