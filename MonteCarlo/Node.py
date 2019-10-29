@@ -9,14 +9,9 @@ Node for a moteCarlo treesearch
 from math import sqrt, log
 
 class Node:
-<<<<<<< HEAD
     def __init__(self, action, state, parent, player=1, terminate = False):
-=======
-    def __init__(self, action, state, parent, player_id,  terminate = False):
->>>>>>> added player_id and some fixes
         self.visits = 0
         self.wins = 0
-        self.player_id = player_id
         self.action = action
         self.state = state
         self.terminate = terminate
