@@ -38,7 +38,7 @@ class MCTS:
         self.steps = steps
 
         self.board_size = board_size # The size of the board, for example nxn
-        self.history_size = history_size
+        self.history_size = history_size # The max size of the state
 
 
     def pick_action(self, state):
@@ -69,17 +69,8 @@ class MCTS:
         return new_action
         
     def rollout(self, node: Node):
-        done = node.terminate
-        state = node.state.copy()
-
         self.enviroment.set_player(node.player)
-        while not done:
-            # TODO: NN has 1xNx5x5 input, which means "state" needs to adapt to this. The NN also wants the history, so converting the history object is relevant here
-            value, policy = self.neural_network.predict(state)
-            state, done = self.enviroment.simulate(state, self.__index_to_action(np.argmax(policy)), self.history_size)
-            history.append(state)
-        win = self.enviroment.calculate_winner(state) == self.player_id
-
+        win = self.enviroment.random_play(node.state, self.history_size) == self.player_id
         self.back_propagation(node, win)
         
     def back_propagation(self, node: Node, win: bool):

@@ -13,7 +13,8 @@ class Enviroment:
     def simulate(self, state, action, state_limit=3) -> tuple:
         """
             State is an array of n-dimensional numpy array with 0, 1 and 2s.
-            Action is a n-dimensional numpy array with 0s except for one single 1-value that determines the move to take
+            Action is a tuple of (x, y)
+            StateLimit is the limit of the state size of the output.
         """
         # Convert action into (player, x, y)
         x, y = action
@@ -85,13 +86,17 @@ class Enviroment:
         done = False
         history = state.copy()
         while not done:
-            
+            # Get all valid movies
             moves = self.get_action_space(history)
             if len(moves) == 0:
                 done = True
                 continue
+            
+            # Select a random move
             move = moves[random.randint(0, len(moves) - 1)]
             move_x, move_y = move[0]
+
+            # Execute move
             history, done = self.simulate(history, (move_x, move_y), state_limit=state_limit)
         return env.calculate_winner(board)
 
