@@ -147,9 +147,3 @@ class MCTS:
         
     def __append_state(self, state, board):
         return np.append(state, board.reshape(1, self.board_size, self.board_size))
-    
-    def loss(self, z: float, v: int, pi: np.array, p: np.array, c: int, theta: np.array) -> float:
-        return self.nn_adapter.loss(z, v, pi, p, c, theta)
-
-    def history_to_nn_input(self, state: np.array, player: int, N: int) -> np.array:
-        return self.nn_adapter.history_to_nn_input(state, player, N)
