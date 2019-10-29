@@ -1,5 +1,5 @@
-from MonteCarlo.node import Node
-from MonteCarlo.buffer import Buffer
+from .node import Node
+from .buffer import Buffer
 import numpy as np
 import random
 from math import sqrt
@@ -42,8 +42,6 @@ class MCTS:
 
 
     def pick_action(self, state):
-        if state.player_id[0] == self.player_id:
-            self.root_node = Node(None, None, None)
         
         for _ in range(self.steps):
             self.tree_search(self.root_node)
@@ -90,14 +88,15 @@ class MCTS:
         # Filter illegal moves from neural_policy
         filtered_neural_policies = []
         size = len(node.state[0])
+
         for child in node.children:
             x, y = child.action
             filtered_neural_policies.append(neural_policy[x*size + y])
             
-        if node.state[0] == self.player_id:
-            return np.array(node.PUCT(True, total_visits, self.c, filtered_neural_policies[index]) for (index, node) in enumerate(node.children)).argmax()
+        if node.player == self.player_id:
+            return node.children[np.array(node.PUCT(True, total_visits, self.c, filtered_neural_policies[index]) for (index, node) in enumerate(node.children)).argmax()]
         else:
-            return np.array(node.PUCT(False, total_visits, self.c, filtered_neural_policies[index]) for (index, node) in enumerate(node.children)).argmin()
+            return node.children[np.array(node.PUCT(False, total_visits, self.c, filtered_neural_policies[index]) for (index, node) in enumerate(node.children)).argmin()]
 
     # assume that the state says who is playing, if its friendly or evil opponent
     def tree_search(self, node: Node):
