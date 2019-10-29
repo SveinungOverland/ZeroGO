@@ -93,7 +93,8 @@ class Enviroment:
 
             # Execute move
             history, done = self.simulate(history, (move_x, move_y), state_limit=state_limit)
-        return env.calculate_winner(history)
+        return self.calculate_winner(history)
+
 
 
 
