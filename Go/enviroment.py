@@ -1,4 +1,4 @@
-from go import *
+from go import (execute_move, opponent, all_possible_moves, calculate_score, BLACK, WHITE, TIE, VALID_MOVE)
 import numpy as np
 import random
 
@@ -30,7 +30,7 @@ class Enviroment:
             raise Exception(f"Invalid move for player {self.__player}: ({x}, {y}). Error-code: {status}\nState:\n{new_state}")
 
         # Add move to a copy of the history
-        new_history = history.copy()
+        new_history = state.copy()
         new_history = np.append(new_history, new_state.reshape(1, 5, 5), axis=0)
 
         # Check if we are done!
@@ -76,15 +76,10 @@ class Enviroment:
     def empty_board(size=5):
         return np.zeros(shape=(size, size), dtype=int)
 
-    @staticmethod
-    def board_to_action(board):
-        max_index = state[-1].argmax()
-        size = len(state[-1])
-        return (max_index // size, max_index % size)
-
     def random_play(self, state, state_limit=3):
         done = False
         history = state.copy()
+        print(history)
         while not done:
             # Get all valid movies
             moves = self.get_action_space(history)
@@ -98,20 +93,7 @@ class Enviroment:
 
             # Execute move
             history, done = self.simulate(history, (move_x, move_y), state_limit=state_limit)
-        return env.calculate_winner(board)
-
-env = Enviroment()
-
-state = env.new_state()
-
-print(state)
-
-new_state, is_done = env.simulate(state, (2, 3), state_limit=3)
-
-print(new_state, is_done)
-
-print(env.generate_random_play(new_state))
-
+        return self.calculate_winner(history)
 
 
 
