@@ -102,9 +102,9 @@ class MCTS:
             filtered_neural_policies.append(neural_policy[x*size + y])
             
         if node.state[0] == self.player_id:
-            return np.array(node.PUCT(False, total_visits, self.c, filtered_neural_policies[index]) for (index, node) in enumerate(node.children)).argmax()
+            return np.array(node.PUCT(True, total_visits, self.c, filtered_neural_policies[index]) for (index, node) in enumerate(node.children)).argmax()
         else:
-            return np.array(node.PUCT(True, total_visits, self.c, filtered_neural_policies[index]) for (index, node) in enumerate(node.children)).argmin()
+            return np.array(node.PUCT(False, total_visits, self.c, filtered_neural_policies[index]) for (index, node) in enumerate(node.children)).argmin()
 
     # assume that the state says who is playing, if its friendly or evil opponent
     def tree_search(self, node: Node):

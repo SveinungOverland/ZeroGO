@@ -7,7 +7,7 @@ def test_create_node():
 
 def test_node_winning():
     assert node.wins == 0
-    node.winning()
+    node.winning(True)
     assert node.wins == 1
 
 def test_node_visits():
@@ -17,13 +17,16 @@ def test_node_visits():
 
 def test_node_PUCT():
     node_puct = Node(None,None,None)
-    node_puct.winning()
+    node_puct.winning(True)
     node_puct.visit()
     node_puct.visit()
-    value = node_puct.PUCT(False,10, 1, .5)
-    Q = node_puct/node_puct.visits
+    
+    value = node_puct.PUCT(True, 10, 1, .5)
+
+    Q = node_puct.wins/node_puct.visits
     U = 1 * .5 * sqrt(10)/node_puct.visits
-    value1 = node_puct.PUCT(False,10, 1, .5)
+
+    value1 = node_puct.PUCT(False, 10, 1, .5)
 
     assert value == Q + U
     assert value1 == Q - U
