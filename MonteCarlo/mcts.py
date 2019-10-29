@@ -27,7 +27,7 @@ NN consists of train
 class MCTS:
     # add the enviroment that the MCTS is going to train on
     # add the neural_network, This network is created ahead, instead of created here. s
-    def __init__(self,  enviroment, neural_network, player_id: int, board_size: int = 5, history_size: int = 3, steps: int = 1600, c: float = 1.0, tau: float = 1.2):
+    def __init__(self,  enviroment, neural_network, player_id: int, nn_adapter: "Adapter object",  board_size: int = 5, history_size: int = 3, steps: int = 1600, c: float = 1.0, tau: float = 1.2):
         self.enviroment = enviroment
         self.neural_network = neural_network
         self.buffer = Buffer()
@@ -36,6 +36,7 @@ class MCTS:
         self.c = c
         self.tau = tau
         self.steps = steps
+        self.nn_adapter = nn_adapter
 
         self.board_size = board_size # The size of the board, for example nxn
         self.history_size = history_size # The max size of the state
@@ -72,7 +73,7 @@ class MCTS:
         self.enviroment.set_player(node.player)
         win = self.enviroment.random_play(node.state, self.history_size) == self.player_id
         self.back_propagation(node, win)
-        
+    
     def back_propagation(self, node: Node, win: bool):
         # reach the root node
         if(node == None):
@@ -116,7 +117,7 @@ class MCTS:
 
 
     def train(self, training_steps: int):
-        for i in range(training_steps):
+        for _ in range(training_steps):
             state = self.enviroment.new_game(self.board_size)
             done = False
 
@@ -136,3 +137,9 @@ class MCTS:
         
     def __append_state(self, state, board):
         return np.append(state, board.reshape(1, self.board_size, self.board_size))
+    
+    def loss(self, z: float, v: int, pi: np.array, p: np.array, c: int, theta: np.array) -> float:
+        return self.nn_adapter.loss(z, v, pi, p, c, theta)
+
+    def history_to_nn_input(self, state: np.array, player: int, N: int) -> np.array:
+        return self.nn_adapter.history_to_nn_input(state, player, N)
