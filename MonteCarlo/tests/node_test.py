@@ -34,7 +34,7 @@ def test_node_PUCT():
 
 def test_parent():
     root = Node("action", "state", None)
-    children = [Node("action", "state", root), Node("action", "state", root, True), Node("action", "state", root), Node("action", "state", root)]
+    children = [Node("action", "state", root), Node("action", "state", root, 1,True), Node("action", "state", root), Node("action", "state", root)]
     root.children = children
     value = False
 
