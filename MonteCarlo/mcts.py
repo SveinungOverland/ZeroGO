@@ -1,5 +1,5 @@
-from MonteCarlo.node import Node
-from MonteCarlo.buffer import Buffer
+from .node import Node
+from .buffer import Buffer
 import numpy as np
 import random
 from math import sqrt
@@ -27,7 +27,7 @@ NN consists of train
 class MCTS:
     # add the enviroment that the MCTS is going to train on
     # add the neural_network, This network is created ahead, instead of created here. s
-    def __init__(self,  enviroment, neural_network, player_id: int, board_size: int = 5, history_size: int = 3, steps: int = 1600, c: float = 1.0, tau: float = 1.2):
+    def __init__(self,  enviroment, neural_network, player_id: int, nn_adapter: "Adapter object",  board_size: int = 5, history_size: int = 3, steps: int = 1600, c: float = 1.0, tau: float = 1.2):
         self.enviroment = enviroment
         self.neural_network = neural_network
         self.buffer = Buffer()
@@ -36,14 +36,13 @@ class MCTS:
         self.c = c
         self.tau = tau
         self.steps = steps
+        self.nn_adapter = nn_adapter
 
         self.board_size = board_size # The size of the board, for example nxn
         self.history_size = history_size # The max size of the state
 
 
     def pick_action(self, state):
-        if state.player_id[0] == self.player_id:
-            self.root_node = Node(None, None, None)
         
         for _ in range(self.steps):
             self.tree_search(self.root_node)
@@ -72,7 +71,7 @@ class MCTS:
         self.enviroment.set_player(node.player)
         win = self.enviroment.random_play(node.state, self.history_size) == self.player_id
         self.back_propagation(node, win)
-        
+    
     def back_propagation(self, node: Node, win: bool):
         # reach the root node
         if(node == None):
@@ -89,14 +88,15 @@ class MCTS:
         # Filter illegal moves from neural_policy
         filtered_neural_policies = []
         size = len(node.state[0])
+
         for child in node.children:
             x, y = child.action
             filtered_neural_policies.append(neural_policy[x*size + y])
             
-        if node.state[0] == self.player_id:
-            return np.array(node.PUCT(True, total_visits, self.c, filtered_neural_policies[index]) for (index, node) in enumerate(node.children)).argmax()
+        if node.player == self.player_id:
+            return node.children[np.array(node.PUCT(True, total_visits, self.c, filtered_neural_policies[index]) for (index, node) in enumerate(node.children)).argmax()]
         else:
-            return np.array(node.PUCT(False, total_visits, self.c, filtered_neural_policies[index]) for (index, node) in enumerate(node.children)).argmin()
+            return node.children[np.array(node.PUCT(False, total_visits, self.c, filtered_neural_policies[index]) for (index, node) in enumerate(node.children)).argmin()]
 
     # assume that the state says who is playing, if its friendly or evil opponent
     def tree_search(self, node: Node):
@@ -115,7 +115,7 @@ class MCTS:
 
 
     def train(self, training_steps: int):
-        for i in range(training_steps):
+        for _ in range(training_steps):
             state = self.enviroment.new_game(self.board_size)
             done = False
 
@@ -147,3 +147,9 @@ class MCTS:
         
     def __append_state(self, state, board):
         return np.append(state, board.reshape(1, self.board_size, self.board_size))
+    
+    def loss(self, z: float, v: int, pi: np.array, p: np.array, c: int, theta: np.array) -> float:
+        return self.nn_adapter.loss(z, v, pi, p, c, theta)
+
+    def history_to_nn_input(self, state: np.array, player: int, N: int) -> np.array:
+        return self.nn_adapter.history_to_nn_input(state, player, N)

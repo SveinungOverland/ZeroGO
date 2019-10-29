@@ -28,7 +28,7 @@ class NNClient:
         self.model.train(Mode.PolicyHead, loss)
         self.model.train(Mode.ValueHead, loss)
     
-    def loss(self, policy, value, z: float, v: int, pi: np.array, p: np.array, c: int, theta: np.array) -> float:
+    def loss(self, z: int, v: int, pi: np.array, p: np.array, c: int, theta: np.array) -> float:
         """
             l = (z - v)^2 - π^(T)*log(p) + c*||θ^2||
         """
