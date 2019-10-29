@@ -66,10 +66,17 @@ class MCTS:
         done = node.terminate
         state = node.state
 
+        # TODO: The node needs to know which player has the turn.
+        # self.environment.set_player(DO THAT HERE)
+        
+        history = node.history.copy()
         while not done:
-            value, policy = self.neural_network.find_best_action(state)
-            state, done = self.enviroment.simulate(state, self.__index_to_action(np.argmax(policy)))
-        win = self.enviroment.find_winner(state) == self.player_id
+            # TODO: NN has 1xNx5x5 input, which means "state" needs to adapt to this. The NN also wants the history, so converting the history object is relevant here
+            input_state = self.__history_to_nn_input(history, self.enviroment.get_player())
+            value, policy = self.neural_network.predict(state)
+            state, done = self.enviroment.simulate(state, self.__index_to_action(np.argmax(policy)), history=history)
+            history.append(state)
+        win = self.enviroment.calculate_winner(state) == self.player_id
 
         self.back_propagation(node, win)
 
@@ -111,7 +118,7 @@ class MCTS:
                 self.rollout(node)
             else:
                 # Node has been visited and expands for all under
-                node.children = [Node(action= action, state= state, parent= node) for (action, state) in self.enviroment.get_action_space(node.state)] #expanding node with all the posible actions and states.
+                node.children = [Node(action= action, state= state, parent= node, history=node.history) for (action, state) in self.enviroment.get_action_space(node.state,history=node.history)] #expanding node with all the posible actions and states.
                 self.rollout(self.choose_node(node))
 
 
@@ -124,9 +131,27 @@ class MCTS:
                 state, done = self.enviroment.simulate(state, action)
             winner = self.enviroment.calculate_winner(state)
 
- # In trainning we want to add intelegent randomness and therefore use stochastic functions         
+    # In trainning we want to add intelegent randomness and therefore use stochastic functions         
     def stochasticly(self, target_node: int, node_sum: int) -> float:
         return target_node**(1/self.tau) / node_sum**(1/self.tau)
 
     def __index_to_action(self, index):
         return (index // self.size, index % self.size)
+
+    def __history_to_nn_input(self, history, player, N=7):
+        """
+            Converts an array of states to the format 1x5x5xN.
+            GPU: 1xNx5x5
+            CPU: 1x5x5x7
+
+            If history-input does not have N/2 records, the output will be padded with zeros.
+            The last 5x5 board determines the player
+        """
+        # TODO: Implement this method
+        pass
+
+    def __loss(self, policy, value):
+        """
+            l = (z - v)^2 - π^(T)*log(p) + c*||θ^2||
+        """
+        

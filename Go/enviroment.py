@@ -20,9 +20,13 @@ class Enviroment:
         if status != VALID_MOVE:
             raise Exception(f"Invalid move for player {self.__player}: ({x}, {y}). Error-code: {status}\nState:\n{new_state}")
 
+        # Add move to a copy of the history
+        new_history = history.copy()
+        new_history.append(new_state)
+
         # Check if we are done!
         other_player = opponent(self.__player)
-        is_done = len(self.get_action_space(new_state, player=other_player)) == 0
+        is_done = len(self.get_action_space(new_state, player=other_player, history=new_history)) == 0
         
         # Swap turn
         self.__player = other_player
@@ -41,6 +45,12 @@ class Enviroment:
         """
         black_score, white_score, score_board = calculate_score(state)
         return BLACK if black_score > white_score else WHITE if white_score > black_score else TIE
+
+    def get_player(self):
+        return self.__player
+
+    def set_player(self, player):
+        self.__player = player
 
     @staticmethod
     def new_state(size=5):

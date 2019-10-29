@@ -11,11 +11,12 @@ GAMMA = 0.3
 
 
 class Node:
-    def __init__(self, action, state, parent, terminate = False):
+    def __init__(self, action, state, parent, terminate = False, history=[]):
         self.visits = 0
         self.wins = 0
         self.action = action
         self.state = state
+        self.history = history
         self.terminate = terminate
         self.parent = parent
         self.children = []
