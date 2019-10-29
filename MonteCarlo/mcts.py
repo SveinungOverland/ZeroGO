@@ -138,7 +138,7 @@ class MCTS:
     def __index_to_action(self, index):
         return (index // self.board_size, index % self.board_size)
 
-    def __history_to_nn_input(self, history, player, N=7):
+    def __history_to_nn_input(self, state: np.array, player, N=7):
         """
             Converts an array of states to the format 1x5x5xN.
             GPU: 1xNx5x5
@@ -150,7 +150,7 @@ class MCTS:
         # TODO: Implement this method
         pass
 
-    def __loss(self, policy, value):
+    def __loss(self, policy, value, z : float, v: int, pi : vektor, p: vektor, c : int,  ):
         """
             l = (z - v)^2 - π^(T)*log(p) + c*||θ^2||
         """
