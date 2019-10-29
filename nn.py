@@ -1,9 +1,9 @@
 import numpy as np
-from Go.enviroment import Enviroment
+from Go.environment import Environment
 from NN import Model, Mode
 
 class NNClient:
-    def __init__(self, c: float, dimension: int = 5, N: int):
+    def __init__(self, c: float, dimension: int = 5, N: int = 3):
         self.c = c
         self.dimension = dimension
         self.model = Model.create()
@@ -39,7 +39,7 @@ class NNClient:
         padding = N - len(state)     # Calc number of empty arrays needed for padding
 
         for _ in range(padding):
-            state = np.append(state, Enviroment.empty_board(size=self.dimension), axis=0)  # Add empty board as padding
+            state = np.append(state, Environment.empty_board(size=self.dimension), axis=0)  # Add empty board as padding
         
         state = np.append(state, np.array([[player for _ in range(self.dimension)] for _ in range(self.dimension)]), axis=0)
         return state

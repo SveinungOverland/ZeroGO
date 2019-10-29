@@ -21,14 +21,14 @@ Back propagation — back propagate to all the visited nodes, increase by 1
     the visit number and if you win, increase by 1 the winning number.
 """
 """
-enviroment consist of simulate, flatten
+environment consist of simulate, flatten
 NN consists of train
 """
 class MCTS:
-    # add the enviroment that the MCTS is going to train on
+    # add the environment that the MCTS is going to train on
     # add the neural_network, This network is created ahead, instead of created here. s
-    def __init__(self,  enviroment, neural_network, player_id: int, nn_adapter: "Adapter object",  board_size: int = 5, history_size: int = 3, steps: int = 1600, c: float = 1.0, tau: float = 1.2):
-        self.enviroment = enviroment
+    def __init__(self,  environment, neural_network, player_id: int, nn_adapter: "Adapter object",  board_size: int = 5, history_size: int = 3, steps: int = 1600, c: float = 1.0, tau: float = 1.2):
+        self.environment = environment
         self.neural_network = neural_network
         self.buffer = Buffer()
         self.root_node = Node(None, None, None)
@@ -68,8 +68,8 @@ class MCTS:
         return new_action
         
     def rollout(self, node: Node):
-        self.enviroment.set_player(node.player)
-        win = self.enviroment.random_play(node.state, self.history_size) == self.player_id
+        self.environment.set_player(node.player)
+        win = self.environment.random_play(node.state, self.history_size) == self.player_id
         self.back_propagation(node, win)
     
     def back_propagation(self, node: Node, win: bool):
@@ -109,33 +109,33 @@ class MCTS:
                 self.rollout(node)
             else:
                 # Node has been visited and expands for all under
-                player_opponent = self.enviroment.opponent(node.player)
-                node.children = [Node(action=action, state=self.__append_state(node.state, state), parent=node, player=player_opponent) for (action, state) in self.enviroment.get_action_space(node.state)] #expanding node with all the posible actions and states.
+                player_opponent = self.environment.opponent(node.player)
+                node.children = [Node(action=action, state=self.__append_state(node.state, state), parent=node, player=player_opponent) for (action, state) in self.environment.get_action_space(node.state)] #expanding node with all the posible actions and states.
                 self.rollout(self.choose_node(node))
 
 
     def train(self, training_steps: int):
         for _ in range(training_steps):
-            state = self.enviroment.new_game(self.board_size)
+            state = self.environment.new_game(self.board_size)
             done = False
 
-            self.enviroment.set_player(1)
+            self.environment.set_player(1)
             while not done:
                 action = self.pick_action(state)
-                state, done = self.enviroment.simulate(state, action, state_limit=self.history_size)
-            winner = self.enviroment.calculate_winner(state)
+                state, done = self.environment.simulate(state, action, state_limit=self.history_size)
+            winner = self.environment.calculate_winner(state)
 
             # For training, we want the winner value (z) to be between -1 and 1
             z = 1 # We won
             if winner != self.player_id:
                 z = -1 # The opponent won
 
-            # For each action done in the game, calculate loss and train NN
-            current_player = 1
-            for (state, probabilities) in self.buffer.data:
-                # Get values from the NN
-                current_player = 2 if current_player == 1 else 1
-                self.neural_network.train(state, current_player, z, probabilities)
+        # For each action done in all the game, calculate loss and train NN
+        current_player = 1
+        for (state, probabilities) in self.buffer.data:
+            # Get values from the NN
+            current_player = 2 if current_player == 1 else 1
+            self.neural_network.train(state, current_player, z, probabilities)
 
 
  # In trainning we want to add intelegent randomness and therefore use stochastic functions         

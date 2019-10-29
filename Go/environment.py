@@ -1,4 +1,4 @@
-from go import (execute_move, opponent, all_possible_moves, calculate_score, BLACK, WHITE, TIE, VALID_MOVE)
+from Go.go import (execute_move, opponent, all_possible_moves, calculate_score, BLACK, WHITE, TIE, VALID_MOVE)
 import numpy as np
 import random
 
@@ -6,7 +6,7 @@ import random
 All input "state"s are arrays of ndarrays
 """
 
-class Enviroment:
+class Environment:
     def __init__(self):
         self.__player = BLACK
 
