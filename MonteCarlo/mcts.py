@@ -84,8 +84,7 @@ class MCTS:
     #chooses a node based on PUCT
     def choose_node(self, node: Node):
         total_visits = sum(child.visits for child in node.children)
-        neural_policy, _ = self.neural_network.find_policy(node.state) # takes in the states and gives all policy values.
-        # Med denne naural_network så er den i samme rekkefølge som barna, dette kan bli veldig fort feil.
+        neural_policy = self.neural_network.predict_policy(node.state) # takes in the states and gives all policy values.
 
         # Filter illegal moves from neural_policy
         filtered_neural_policies = []
@@ -123,8 +122,20 @@ class MCTS:
             self.enviroment.set_player(1)
             while not done:
                 action = self.pick_action(state)
-                state, done = self.enviroment.simulate(state, action, self.history_size)
+                state, done = self.enviroment.simulate(state, action, state_limit=self.history_size)
             winner = self.enviroment.calculate_winner(state)
+
+            # For training, we want the winner value (z) to be between -1 and 1
+            z = 1 # We won
+            if winner != self.player_id:
+                z = -1 # The opponent won
+
+            # For each action done in the game, calculate loss and train NN
+            current_player = 1
+            for (state, probabilities) in self.buffer.data:
+                # Get values from the NN
+                current_player = 2 if current_player == 1 else 1
+                self.neural_network.train(state, current_player, z, probabilities)
 
 
  # In trainning we want to add intelegent randomness and therefore use stochastic functions         
