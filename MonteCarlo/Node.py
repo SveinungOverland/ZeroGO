@@ -7,8 +7,6 @@ Node for a moteCarlo treesearch
     terminate = False
 """
 from math import sqrt, log
-GAMMA = 0.3
-
 
 class Node:
     def __init__(self, action, state, parent, terminate = False, history=[]):
@@ -32,7 +30,7 @@ class Node:
         if won:
             self.wins += 1
 
-    def PUCT(self, opponent, total_visits, c, naural_network_policy):
+    def PUCT(self, opponent : bool, total_visits : int, c: float, naural_network_policy : float) -> float:
         Q = self.wins/self.visits
         U = c * naural_network_policy * sqrt(total_visits)/self.visits
         return Q + U if opponent else Q - U
