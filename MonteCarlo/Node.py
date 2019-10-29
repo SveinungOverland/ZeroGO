@@ -9,14 +9,14 @@ Node for a moteCarlo treesearch
 from math import sqrt, log
 
 class Node:
-    def __init__(self, action, state, parent, terminate = False, history=[]):
+    def __init__(self, action, state, parent, player=1, terminate = False):
         self.visits = 0
         self.wins = 0
         self.action = action
         self.state = state
-        self.history = history
         self.terminate = terminate
         self.parent = parent
+        self.player = player
         self.children = []
 
     #Policy uses upperboundpolicy π = w/n +(-) c*sqrt(ln(N)/n)

@@ -27,7 +27,7 @@ NN consists of train
 class MCTS:
     # add the enviroment that the MCTS is going to train on
     # add the neural_network, This network is created ahead, instead of created here. s
-    def __init__(self,  enviroment, neural_network, player_id: int, board_size: int = 5, steps: int = 1600, c: float = 1.0, tau: float = 1.2):
+    def __init__(self,  enviroment, neural_network, player_id: int, board_size: int = 5, history_size: int = 3, steps: int = 1600, c: float = 1.0, tau: float = 1.2):
         self.enviroment = enviroment
         self.neural_network = neural_network
         self.buffer = Buffer()
@@ -64,17 +64,13 @@ class MCTS:
         
     def rollout(self, node: Node):
         done = node.terminate
-        state = node.state
+        state = node.state.copy()
 
-        # TODO: The node needs to know which player has the turn.
-        # self.environment.set_player(DO THAT HERE)
-        
-        history = node.history.copy()
+        self.enviroment.set_player(node.player)
         while not done:
             # TODO: NN has 1xNx5x5 input, which means "state" needs to adapt to this. The NN also wants the history, so converting the history object is relevant here
-            input_state = self.__history_to_nn_input(history, self.enviroment.get_player())
             value, policy = self.neural_network.predict(state)
-            state, done = self.enviroment.simulate(state, self.__index_to_action(np.argmax(policy)), history=history)
+            state, done = self.enviroment.simulate(state, self.__index_to_action(np.argmax(policy)), self.history_size)
             history.append(state)
         win = self.enviroment.calculate_winner(state) == self.player_id
 
@@ -96,7 +92,7 @@ class MCTS:
 
         # Filter illegal moves from neural_policy
         filtered_neural_policies = []
-        size = len(node.state)
+        size = len(node.state[0])
         for child in node.children:
             x, y = child.action
             filtered_neural_policies.append(neural_policy[x*size + y])
@@ -117,7 +113,8 @@ class MCTS:
                 self.rollout(node)
             else:
                 # Node has been visited and expands for all under
-                node.children = [Node(action= action, state= state, parent= node, history=node.history) for (action, state) in self.enviroment.get_action_space(node.state,history=node.history)] #expanding node with all the posible actions and states.
+                player_opponent = self.enviroment.opponent(node.player)
+                node.children = [Node(action=action, state=self.__append_state(node.state, state), parent=node, player=player_opponent) for (action, state) in self.enviroment.get_action_space(node.state)] #expanding node with all the posible actions and states.
                 self.rollout(self.choose_node(node))
 
 
@@ -127,7 +124,7 @@ class MCTS:
             done = False
             while not done:
                 action = self.pick_action(state)
-                state, done = self.enviroment.simulate(state, action)
+                state, done = self.enviroment.simulate(state, action, self.history_size)
             winner = self.enviroment.calculate_winner(state)
 
 
@@ -137,6 +134,9 @@ class MCTS:
 
     def __index_to_action(self, index):
         return (index // self.board_size, index % self.board_size)
+
+    def __append_state(self, state, board):
+        return np.append(state, board.reshape(1, self.board_size, self.board_size))
 
     def __history_to_nn_input(self, history, player, N=7):
         """
