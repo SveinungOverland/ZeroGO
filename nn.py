@@ -1,12 +1,12 @@
 import numpy as np
 from Go.environment import Environment
-from NN import Model, Mode
+from NN.dcnn_v1 import Model, Mode, DataFormats
 
 class NNClient:
-    def __init__(self, c: float, dimension: int = 5, N: int = 3):
+    def __init__(self, c: float, dimension: int = 5, N: int = 7):
         self.c = c
         self.dimension = dimension
-        self.model = Model.create()
+        self.model = Model.create(data_format=DataFormats.ChannelsLast)
         self.N = N
 
     def predict_policy(self, state: np.array, player: int) -> float:
