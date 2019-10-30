@@ -11,3 +11,6 @@ class Buffer():
     # Save the state and policy-values
     def remember_upper_conf(self, state, probabilites):
         self.data.append((state, probabilites))
+
+    def clear(self):
+        self.data = []

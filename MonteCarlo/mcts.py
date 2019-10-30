@@ -116,6 +116,7 @@ class MCTS:
 
     def train(self, training_steps: int):
         for _ in range(training_steps):
+            self.buffer.clear()
             state = self.environment.new_game(self.board_size)
             done = False
 
@@ -130,12 +131,12 @@ class MCTS:
             if winner != self.player_id:
                 z = -1 # The opponent won
 
-        # For each action done in all the game, calculate loss and train NN
-        current_player = 1
-        for (state, probabilities) in self.buffer.data:
-            # Get values from the NN
-            current_player = 2 if current_player == 1 else 1
-            self.neural_network.train(state, current_player, z, probabilities)
+            # For each action done in all the game, calculate loss and train NN
+            current_player = 1
+            for (state, probabilities) in self.buffer.data:
+                # Get values from the NN
+                current_player = 2 if current_player == 1 else 1
+                self.neural_network.train(state, current_player, z, probabilities)
 
 
  # In trainning we want to add intelegent randomness and therefore use stochastic functions         
