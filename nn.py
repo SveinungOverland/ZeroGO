@@ -9,9 +9,8 @@ class NNClient:
         self.model = Model.create()
         self.N = N
 
-    def predict_policy(self, state: np.array, player: int) -> float:
-        nn_input = self.__state_to_nn_input(state, player, self.N)
-        return self.model.predict(Mode.PolicyHead, nn_input)
+    def predict_policy(self, state: np.array) -> float:
+        return np.zeros(25)
 
     def predict(self, state: np.array, player: int) -> tuple:
         nn_input = self.__state_to_nn_input(state, player, self.N)
