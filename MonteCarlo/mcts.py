@@ -40,12 +40,13 @@ class MCTS:
         self.board_size = board_size # The size of the board, for example nxn
         self.history_size = history_size # The max size of the state
 
-
+    #Extends the MCT with both the neural network and MCTS and finds the best possible choice.
     def pick_action(self, state):
+
         for _ in range(self.steps):
             self.tree_search(self.root_node)
 
-        return self.__find_best_action()
+        return self.find_best_action()
 
 
     def rollout(self, node: Node):
@@ -70,6 +71,8 @@ class MCTS:
 
         # Filter illegal moves from neural_policy
         filtered_neural_policies = []
+
+        # Here there might be a bug. the state is 5x5. where [0] = 5. and the number of actions is <=25.
         size = len(node.state[0])
 
         for child in node.children:
@@ -93,7 +96,7 @@ class MCTS:
             else:
                 # Node has been visited and expands for all under
                 player_opponent = self.environment.opponent(node.player)
-                node.children = [Node(action=action, state=self.__append_state(node.state, state), parent=node, player=player_opponent) for (action, state) in self.environment.get_action_space(node.state)] #expanding node with all the posible actions and states.
+                node.children = [Node(action=action, state=self.__append_state(node.state, state), parent=node, player=player_opponent) for (action, state) in self.environment.get_action_space(node.state, node.player)] #expanding node with all the posible actions and states.
                 self.rollout(self.choose_node(node))
 
 
@@ -121,23 +124,24 @@ class MCTS:
                 current_player = 2 if current_player == 1 else 1
                 self.neural_network.train(state, current_player, z, probabilities)
 
-
  # In trainning we want to add intelegent randomness and therefore use stochastic functions         
     def __stochasticly(self, target_node: int, node_sum: int) -> float:
         return target_node**(1/self.tau) / node_sum**(1/self.tau)
 
+    # Helper function for the pick action fuction. Adds all the probabilities to a list to train on and gives the best action to pick action.
     def __find_best_action(self) -> tuple:
         present_node = self.root_node
         probabilities = []
         value = 0
         new_action = None
         # Getting the total visits of all the child nodes.
-        total_visits = sum([child.visits for child in self.root_node.children])
+        total_visits = sum([child.visits for child in present_node.children])
 
-        for child in self.root_node.children:
+        for child in present_node.children:
             # can try to add all of them into a 9x9 matrix representing what we would get.
             visit_probability =  self.stochasticly(child.visits, total_visits)
-
+            
+            # If the childs probability is higher than the ones before that means to choose that one.
             if visit_probability > value:
                 value = visit_probability
                 new_action = child.action
@@ -148,10 +152,10 @@ class MCTS:
         # Do we not need to save who is playing when running training sessions?
         self.buffer.remember_upper_conf(present_node.state, probabilities)
 
+        #If the action is None that means a bug is somewhere in the code above.
         if new_action == None:
             raise ValueError("the new action is None!")
         return new_action
-
 
     def __index_to_action(self, index):
         return (index // self.board_size, index % self.board_size)

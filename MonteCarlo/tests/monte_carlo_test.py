@@ -10,7 +10,7 @@ class Mock_environment():
         return (np.zeros(shape = (9,9)), False)
 
     def get_action_space(self, state, player=None):
-        return ("action", np.zeros(shape = (9,9)))
+        return ((1,1), np.zeros(shape = (9,9)))
 
     def calculate_winner(self, state) -> int:
         return 1
@@ -72,16 +72,7 @@ def test_back_propagation():
     assert mcts_object.root_node.visits == 2
 
 # Må få avklaring for choose node og metoder brukt i denne metoden
-"""
-def test_choose_node():
-    #create parent_node with children
-    parent_node =  Node((1,1), np.zeros(shape = (1,9)), None)
-    children = [Node((1,1), np.zeros(shape = (1,9)), parent_node), Node((1,1), np.zeros(shape = (1,9)), parent_node), Node((1,1), np.zeros(shape = (1,9)), parent_node)]
-    children[0].visits = 10
-    children[0].wins = 9
-    parent_node.children = children
-    assert children[0] == mcts_object.choose_node(parent_node)
-""";
+
 
 def test_rollout():
     #create parent_node with children
@@ -99,4 +90,34 @@ def test_rollout():
 
 def train_pick_action():
     mcts_object.root_node = Node((1,1), np.zeros(25), None)
+    children = [Node("best_one_here!", "state", mcts_object.root_node), Node("action", "state", mcts_object.root_node,1,True), Node("action", "state", mcts_object.root_node), Node("action", "state", mcts_object.root_node)]
+    children[0].visits = 10
+    children[0].wins = 10
+    assert mcts_object.pick_action == children[0].action
 
+
+def train_tree_search():
+    mcts_object.root_node = Node((1,1), np.zeros(25), None)
+    children = [Node("best_one_here!", "state", mcts_object.root_node), Node("action", "state", mcts_object.root_node,1,True), Node("action", "state", mcts_object.root_node), Node("action", "state", mcts_object.root_node)]
+    children[0].visits = 10
+    children[0].wins = 10
+    mcts_object.tree_search(mcts_object.root_node)
+    #checking if child 0 get a visit after the mc rollout inside the treeseach
+    assert children[0].visits == 21
+    #checking if the child got children and became a parent
+    assert children[0].children == 0
+    print(children[0].children) 
+
+
+
+
+"""
+def test_choose_node():
+    #create parent_node with children
+    parent_node =  Node((1,1), np.zeros(shape = (1,9)), None)
+    children = [Node((1,1), np.zeros(shape = (1,9)), parent_node), Node((1,1), np.zeros(shape = (1,9)), parent_node), Node((1,1), np.zeros(shape = (1,9)), parent_node)]
+    children[0].visits = 10
+    children[0].wins = 9
+    parent_node.children = children
+    assert children[0] == mcts_object.choose_node(parent_node)
+""";
