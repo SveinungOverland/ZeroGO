@@ -35,30 +35,20 @@ class Mock_NN():
     def find_policy(self, state):
         return (np.zeros(shape = (25)), 1)
 
-    def predict_policy(self, state) -> float:
-        nn_input = self.__state_to_nn_input(state, player, self.N)
-        return self.model.predict(Mode.PolicyHead, nn_input)
-        
-    def loss(self, z: int, v: int, pi: np.array, p: np.array, c: int, theta: np.array) -> float:
-        """
-            l = (z - v)^2 - π^(T)*log(p) + c*||θ^2||
-        """
-        return (z - v) ** 2 - pi.transpose().dot(np.log10(p))[0] + self.c * np.linalg.norm(theta)
+    def predict_policy(self, state: np.array, player: int) -> float:
+        return np.zeros(shape = (5,5,3))
 
+    def loss(self, z: int, v: int, pi: np.array, p: np.array, c: int, theta: np.array) -> float:
+        return (z - v) ** 2 - pi.transpose().dot(np.log10(p))[0] + self.c * np.linalg.norm(theta)
 
     def __state_to_nn_input(self, state: np.array, player: int, N: int) -> np.array:
         return np.zeros(shape= (5,5,3))
 
-class Mock_NN_Adapter():
-    def predict_policy(self, state: np.array, player: int) -> float:
-        nn_input = self.__state_to_nn_input(state, player, self.N)
-        return self.model.predict(Mode.PolicyHead, nn_input)
 
 mock_environment = Mock_environment()
 mock_NN = Mock_NN()
-mock_NN_Adapter = Mock_NN_Adapter()
 
-mcts_object = MCTS(environment= mock_environment , neural_network= mock_NN, player_id= 1,nn_adapter= mock_NN_Adapter, board_size = 5,history_size = 3,steps = 1)
+mcts_object = MCTS(environment= mock_environment , neural_network= mock_NN, player_id= 1, board_size = 5,history_size = 3,steps = 1)
 
 #testing the backpropagation of the mcts
 def test_back_propagation():
@@ -81,6 +71,8 @@ def test_back_propagation():
     assert mcts_object.root_node.wins == 1
     assert mcts_object.root_node.visits == 2
 
+# Må få avklaring for choose node og metoder brukt i denne metoden
+"""
 def test_choose_node():
     #create parent_node with children
     parent_node =  Node((1,1), np.zeros(shape = (1,9)), None)
@@ -89,6 +81,7 @@ def test_choose_node():
     children[0].wins = 9
     parent_node.children = children
     assert children[0] == mcts_object.choose_node(parent_node)
+""";
 
 def test_rollout():
     #create parent_node with children
@@ -106,4 +99,4 @@ def test_rollout():
 
 def train_pick_action():
     mcts_object.root_node = Node((1,1), np.zeros(25), None)
-    
+

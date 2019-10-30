@@ -27,7 +27,7 @@ NN consists of train
 class MCTS:
     # add the environment that the MCTS is going to train on
     # add the neural_network, This network is created ahead, instead of created here. s
-    def __init__(self,  environment, neural_network, player_id: int, nn_adapter: "Adapter object",  board_size: int = 5, history_size: int = 3, steps: int = 1600, c: float = 1.0, tau: float = 1.2):
+    def __init__(self,  environment: "environment" , neural_network: "Neural Network Client", player_id: int,  board_size: int = 5, history_size: int = 3, steps: int = 1600, c: float = 1.0, tau: float = 1.2):
         self.environment = environment
         self.neural_network = neural_network
         self.buffer = Buffer()
@@ -36,37 +36,18 @@ class MCTS:
         self.c = c
         self.tau = tau
         self.steps = steps
-        self.nn_adapter = nn_adapter
 
         self.board_size = board_size # The size of the board, for example nxn
         self.history_size = history_size # The max size of the state
 
 
     def pick_action(self, state):
-        
         for _ in range(self.steps):
             self.tree_search(self.root_node)
 
-        action_space = []
-        value = 0
+        return self.__find_best_action()
 
-        # Getting the total visits of  all the child nodes.
-        total_visits = sum([child.visits for child in self.root_node.children])
 
-        for child in self.root_node.children:
-            # can try to add all of them into a 9x9 matrix representing what we would get.
-            val =  self.stochasticly(child.visits, total_visits)
-            if val > value:
-                value = val
-                new_action = child.action
-                self.root_node = child
-
-            action_space.append(val)
-        
-        self.buffer.remember_upper_conf(self.root_node.state, action_space)
-
-        return new_action
-        
     def rollout(self, node: Node):
         self.environment.set_player(node.player)
         win = self.environment.random_play(node.state, self.history_size) == self.player_id
@@ -83,7 +64,9 @@ class MCTS:
     #chooses a node based on PUCT
     def choose_node(self, node: Node):
         total_visits = sum(child.visits for child in node.children)
-        neural_policy = self.neural_network.predict_policy(node.state) # takes in the states and gives all policy values.
+    
+        # Change here to give in the player_id of that node who's playing, not sure if this is correct @Anders Hallem Iversen
+        neural_policy = self.neural_network.predict_policy(node.state, node.player) # takes in the states and gives all policy values.
 
         # Filter illegal moves from neural_policy
         filtered_neural_policies = []
@@ -140,8 +123,35 @@ class MCTS:
 
 
  # In trainning we want to add intelegent randomness and therefore use stochastic functions         
-    def stochasticly(self, target_node: int, node_sum: int) -> float:
+    def __stochasticly(self, target_node: int, node_sum: int) -> float:
         return target_node**(1/self.tau) / node_sum**(1/self.tau)
+
+    def __find_best_action(self) -> tuple:
+        present_node = self.root_node
+        probabilities = []
+        value = 0
+        new_action = None
+        # Getting the total visits of all the child nodes.
+        total_visits = sum([child.visits for child in self.root_node.children])
+
+        for child in self.root_node.children:
+            # can try to add all of them into a 9x9 matrix representing what we would get.
+            visit_probability =  self.stochasticly(child.visits, total_visits)
+
+            if visit_probability > value:
+                value = visit_probability
+                new_action = child.action
+                self.root_node = child
+
+            probabilities.append(visit_probability)
+        
+        # Do we not need to save who is playing when running training sessions?
+        self.buffer.remember_upper_conf(present_node.state, probabilities)
+
+        if new_action == None:
+            raise ValueError("the new action is None!")
+        return new_action
+
 
     def __index_to_action(self, index):
         return (index // self.board_size, index % self.board_size)
