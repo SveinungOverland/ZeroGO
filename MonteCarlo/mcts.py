@@ -20,14 +20,11 @@ Simulation — play random simulation until the game is over.
 Back propagation — back propagate to all the visited nodes, increase by 1
     the visit number and if you win, increase by 1 the winning number.
 """
-"""
-environment consist of simulate, flatten
-NN consists of train
-"""
+
 class MCTS:
     # add the environment that the MCTS is going to train on
     # add the neural_network, This network is created ahead, instead of created here. s
-    def __init__(self,  environment: "environment" , neural_network: "Neural Network Client", player_id: int,  board_size: int = 5, history_size: int = 3, steps: int = 1600, c: float = 1.0, tau: float = 1.2):
+    def __init__(self,  environment , neural_network,  player_id: int,  board_size: int = 5, history_size: int = 3, steps: int = 1600, c: float = 1.0, tau: float = 1.2):
         self.environment = environment
         self.neural_network = neural_network
         self.buffer = Buffer()

@@ -98,7 +98,7 @@ class Model:
   def get_trunk_weights(self):
     return self.trunk.get_weights()
   
-  def __retrieve_net(self, mode):
+  def __retrieve_net(self, mode: Mode):
     if mode == Mode.Trunk:
       net = self.trunk
     elif mode == Mode.Value:
@@ -118,7 +118,8 @@ class Model:
     net = self.__retrieve_net(mode)
     tape = tf.GradientTape()
     gradients = tape.gradient(loss, net.trainable_variables)
-    optimizer.apply_gradients(zip(gradients, net.trainable_variables))
+    #optimizer.apply_gradients(zip(gradients, net.trainable_variables))
+    # where is the optimizer from @Svenung 
   
   def predict(self, mode, X):
     net = self.__retrieve_net(mode)
@@ -128,7 +129,7 @@ class Model:
     net = self.__retrieve_net(mode)
     return net.summary()
   
-  def load(self, file_name):
+  def load(self, file_name, mode: Mode):
     self.__retrieve_net(mode.Policy).load_weights(file_name + "/policy")
     self.__retrieve_net(mode.Value).load_weights(file_name + "/value")
     self.__retrieve_net(mode.Trunk).load_weights(file_name + "/trunk")
