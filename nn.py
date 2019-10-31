@@ -40,5 +40,15 @@ class NNClient:
         padding = N - len(states) * 2 - 1    # Calc number of empty arrays needed for padding
 
 
+        dimension_3 = []
+        for row in range(self.dimension):
+            dimension_2 = []
+            for column in range(self.dimension):
+                cell = [1 if state[row][column] == 1 else 0 for state in states] + [0 for _ in range(padding)] + [1 if state[row][column] == 2 else 0 for state in states] + [0 for _ in range(padding)] + [player - 1]
+                dimension_2.append(cell)
+            dimension_3.append(dimension_2)
+
+        return np.array([dimension_3])
+        
         # I heard you like readable code, so I made it in one line ^^
-        return np.array([[[[1 if state[row][column] == color else 0 for color in range(1, 3) for state in states] + [player - 1] for column in range(self.dimension)] for row in range(self.dimension)]])
+        #return np.array([[[[1 if state[row][column] == 1 else 0 for state in states] + [0 for _ in range(padding)] + [1 if state[row][column] == 2 else 0 for state in states] + [0 for _ in range(padding)] + [player - 1] for column in range(self.dimension)] for row in range(self.dimension)]])
