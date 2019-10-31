@@ -1,7 +1,27 @@
 # Import and initialize the pygame library
 import pygame
 pygame.init()
+pygame.font.init()
 from Go.game import Game
+
+class Button:
+    def __init__(self, x, y, width, height, color, screen, text):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.color = color
+        self.screen = screen
+        self.text = text
+    
+    def show(self):
+        pygame.draw.rect(self.screen, self.color, (self.x, self.y, self.width, self.height))
+        font = pygame.font.SysFont("Arial", 30)
+        surface = font.render(self.text, False, (0, 0, 0))
+        self.screen.blit(surface, (self.x + self.width / 5, self.y))
+    
+    def collision(self, x, y):
+        return self.x < x < self.x + self.width and self.y < y < self.y + self.height
 
 class BoardView:
     def __init__(self, screen, x, y, width, height, dimension=9):
@@ -20,7 +40,8 @@ class BoardView:
         self.radius = int(self.line_gap / 2.2)
 
         self.is_black = True
-
+        self.button = Button(x=self.x, y=self.height + self.line_gap / 2,
+        width=100, height=40, color=(255, 255, 255), screen=screen, text="Pass")
         self.screen = screen
 
     def show(self):
@@ -54,6 +75,7 @@ class BoardView:
                     y_pos = int(self.y + row_index * self.line_gap)
                     pygame.draw.circle(self.screen, (255, 255, 255),
                                        (x_pos, y_pos), self.radius)
+        self.button.show()
 
     def place_piece(self, row, column):
         #self.board[row, column] = value
@@ -69,12 +91,14 @@ class BoardView:
 global screen
 screen = pygame.display.set_mode([600, 600])
 
-board_x = 50
-board_y = 50
+button = Button(x=100, y=100, width=100, height=40, color=(128, 128, 128), screen=screen, text="Pass")
+
 board_width = 500
 board_height = 500
 dimension = 5
 line_gap = board_width / dimension
+board_x = 50 + line_gap / 2
+board_y = 50 + line_gap / 2
 
 board = BoardView(screen, board_x, board_y, board_width, board_height, dimension=dimension)
 
@@ -97,16 +121,23 @@ while running:
 
             if row >= 0 and row < dimension and column >= 0 and column < dimension:
                 board.move_shadow(row=row, column=column)
+                
         elif event.type == pygame.MOUSEBUTTONUP:
-            row, column = board.shadow_piece
-            row = int(row)
-            column = int(column)
-            if row >= 0 and row < dimension and column >= 0 and column < dimension:
-                board.place_piece(row, column)
+            x, y = pygame.mouse.get_pos()
+            if board.button.collision(x, y):
+                board.is_black = not board.is_black
+                board.go.do_pass()
+            else:
+                row, column = board.shadow_piece
+                row = int(row)
+                column = int(column)
+                if row >= 0 and row < dimension and column >= 0 and column < dimension:
+                    board.place_piece(row, column)
 
 
     screen.fill((0, 0, 0))
     board.show()
+    #button.show()
 
     # Flip the display
     pygame.display.flip()
