@@ -35,11 +35,20 @@ class NNClient:
         return (z - v) ** 2 - pi.transpose().dot(np.log10(p))[0] + self.c * np.linalg.norm(theta)
 
 
-    def __state_to_nn_input(self, state: np.array, player: int, N: int) -> np.array:
-        padding = N - len(state)     # Calc number of empty arrays needed for padding
+    def __state_to_nn_input(self, states: np.array, player: int, N: int) -> np.array:
+        # This be correct padding?
+        padding = N - len(states) * 2 - 1    # Calc number of empty arrays needed for padding
 
-        for _ in range(padding):
-            state = np.append(state, Environment.empty_board(size=self.dimension), axis=0)  # Add empty board as padding
+
+        dimension_3 = []
+        for row in range(self.dimension):
+            dimension_2 = []
+            for column in range(self.dimension):
+                cell = [1 if state[row][column] == 1 else 0 for state in states] + [0 for _ in range(padding)] + [1 if state[row][column] == 2 else 0 for state in states] + [0 for _ in range(padding)] + [player - 1]
+                dimension_2.append(cell)
+            dimension_3.append(dimension_2)
+
+        return np.array([dimension_3])
         
-        state = np.append(state, np.array([[player for _ in range(self.dimension)] for _ in range(self.dimension)]), axis=0)
-        return state
+        # I heard you like readable code, so I made it in one line ^^
+        #return np.array([[[[1 if state[row][column] == 1 else 0 for state in states] + [0 for _ in range(padding)] + [1 if state[row][column] == 2 else 0 for state in states] + [0 for _ in range(padding)] + [player - 1] for column in range(self.dimension)] for row in range(self.dimension)]])

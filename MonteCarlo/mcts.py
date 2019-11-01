@@ -136,7 +136,7 @@ class MCTS:
 
         for child in present_node.children:
             # can try to add all of them into a 9x9 matrix representing what we would get.
-            visit_probability =  self.stochasticly(child.visits, total_visits)
+            visit_probability =  self.__stochasticly(child.visits, total_visits)
             
             # If the childs probability is higher than the ones before that means to choose that one.
             if visit_probability > value:
