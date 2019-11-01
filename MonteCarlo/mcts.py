@@ -70,7 +70,7 @@ class MCTS:
         filtered_neural_policies = []
 
         # Here there might be a bug. the state is 5x5. where [0] = 5. and the number of actions is <=25.
-        size = len(node.state[0])
+        size = self.board_size
 
         for child in node.children:
             x, y = child.action

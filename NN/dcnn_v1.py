@@ -118,7 +118,7 @@ class Model:
     net = self.__retrieve_net(mode)
     tape = tf.GradientTape()
     gradients = tape.gradient(loss, net.trainable_variables)
-    #optimizer.apply_gradients(zip(gradients, net.trainable_variables))
+    optimizer.apply_gradients(zip(gradients, net.trainable_variables))
     # where is the optimizer from @Svenung 
   
   def predict(self, mode, X):
