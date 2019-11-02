@@ -74,7 +74,7 @@ class MCTS:
 
     #chooses a node based on PUCT
     def choose_node(self, node: Node):
-        total_visits = sum(child.visits for child in node.children)
+        total_visits = node.visits # sum(child.visits for child in node.children)
         neural_policy = self.neural_network.predict_policy(node.state, node.player)[0] # takes in the states and gives all policy values.
 
         # Filter illegal moves from neural_policy
@@ -87,26 +87,25 @@ class MCTS:
             filtered_neural_policies.append(neural_policy[x*size + y])
             
         if node.player == self.player_id:
-            return node.children[np.array(node.PUCT(True, total_visits, self.c, filtered_neural_policies[index]) for (index, node) in enumerate(node.children)).argmax()]
+            return node.children[np.array(list(node.PUCT(True, total_visits, self.c, filtered_neural_policies[index]) for (index, node) in enumerate(node.children))).argmax()]
         else:
-            return node.children[np.array(node.PUCT(False, total_visits, self.c, filtered_neural_policies[index]) for (index, node) in enumerate(node.children)).argmin()]
+            return node.children[np.array(list(node.PUCT(False, total_visits, self.c, filtered_neural_policies[index]) for (index, node) in enumerate(node.children))).argmin()]
 
     # assume that the state says who is playing, if its friendly or evil opponent
     def tree_search(self, node: Node):
-        if node.children:
+        if len(node.children) > 0:
             self.tree_search(self.choose_node(node))
         else:
             # hit leaf_node. Expand this node.
             if node.visits == 0: 
                 # the node has no visits and need rollout
-                start = time.time()
                 self.rollout(node)
-                end = time.time()
-                print("Rollout time: ", end - start)
             else:
                 # Node has been visited and expands for all under
                 player_opponent = self.environment.get_opponent(node.player)
                 node.children = [Node(action=action, state=self.__append_state(node.state, state), parent=node, player=player_opponent) for (action, state) in self.environment.get_action_space(node.state, node.player)] #expanding node with all the posible actions and states.
+                if len(node.children) == 0:
+                    return
                 self.rollout(self.choose_node(node))
 
 
@@ -119,12 +118,29 @@ class MCTS:
 
             iteration_count = 0
 
-            self.environment.set_player(self.player_id)
-            print("Starting match")
+            current_player = self.player_id
+            self.environment.set_player(current_player)
+            has_passed = False
             while not done:
                 action = self.pick_action(state)
+
+                # Handle pass check
+                x, y = action
+                if has_passed and x == -1 and y == -1:
+                    # Both has passed, the game is done
+                    break
+                else:
+                    has_passed = x == -1 and y == -1
+
                 print("Action: " , action)
-                state, done = self.environment.simulate(state, action, state_limit=self.history_size)
+                self.environment.set_player(current_player)
+                try:
+                    state, done = self.environment.simulate(state, action, state_limit=self.history_size)
+                except Exception as e:
+                    print(e)
+                    print("Error State: ", state)
+                current_player = 2 if current_player == 1 else 1
+                print("State:  ", state[-1])
                 print("Iteration: ", iteration_count)
                 iteration_count += 1
             winner = self.environment.calculate_winner(state)
@@ -139,7 +155,7 @@ class MCTS:
             for (state, probabilities) in self.buffer.data:
                 # Get values from the NN
                 current_player = 2 if current_player == 1 else 1
-                self.neural_network.train(state, current_player, z, probabilities)
+                self.neural_network.train(state, current_player, z, np.array(probabilities))
 
  # In trainning we want to add intelegent randomness and therefore use stochastic functions         
     def __stochasticly(self, target_node: int, node_sum: int) -> float:

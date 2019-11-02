@@ -150,9 +150,9 @@ class Model:
   
   def train(self, mode: Mode, loss, learning_rate=0.01):
     net = self.__retrieve_net(mode)
-    tape = tf.GradientTape()
-    gradients = tape.gradient(loss, net.trainable_variables)
-    keras.optimizers.Adam(learning_rate).apply_gradients(zip(gradients, net.trainable_variables))
+    with tf.GradientTape() as tape:
+      gradients = tape.gradient(tf.convert_to_tensor(loss, dtype=tf.float32), net.trainable_variables)
+      keras.optimizers.SGD(learning_rate).apply_gradients(zip(gradients, net.trainable_variables))
   
   def predict(self, mode, X):
     net = self.__retrieve_net(mode)
