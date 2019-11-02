@@ -3,6 +3,7 @@ from .buffer import Buffer
 import numpy as np
 import random
 from math import sqrt
+import pydot # for visualizing the tree
 
 import time
 """
@@ -44,12 +45,15 @@ class MCTS:
 
     #Extends the MCT with both the neural network and MCTS and finds the best possible choice.
     def pick_action(self, state):
-
+        visualize = True
         i = 0
         for _ in range(self.steps):
             print(i)
             i += 1
             self.tree_search(self.root_node)
+
+        if visualize:
+            self.visualize_tree()
 
         return self.__find_best_action()
 
@@ -76,10 +80,6 @@ class MCTS:
         # Filter illegal moves from neural_policy
         filtered_neural_policies = []
 
-<<<<<<< HEAD
-        # Here there might be a bug. the state is 5x5. where [0] = 5. and the number of actions is <=25.
-=======
->>>>>>> e06aa4643543e64fc3bf6f83569a404e67fd6acf
         size = self.board_size
 
         for child in node.children:
@@ -179,3 +179,10 @@ class MCTS:
         
     def __append_state(self, state, board):
         return np.append(state, board.reshape(1, self.board_size, self.board_size), axis=0)
+
+
+    #visulize the node tree 
+    def visualize_tree(self):
+        graph = pydot.Dot(graph_type='graph')
+        self.build_graph(None, self.root, graph)
+        graph.write_png('graph.png')
