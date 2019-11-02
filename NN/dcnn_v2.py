@@ -14,7 +14,9 @@ Original file is located at
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
+from tensorflow.keras import backend
 from tensorflow.keras.optimizers import SGD
+
 import numpy as np
 
 tf.__version__
@@ -59,6 +61,9 @@ def create_trunk(shape, nr_residual_layers, filters, data_format, kernel_size):
   # Add lambda layer here to transpose NHWC to NCHW automatically
   bn_axis = data_format_axis(data_format)
   inputs = keras.Input(shape=shape)
+  if data_format == DataFormats.ChannelsFirst:
+    # (0,1,2,3) NHWC -> (0,3,1,2) NCHW
+    inputs = layers.Lambda(lambda x: backend.permute_dimensions(x, (0, 3, 1, 2)))(inputs)
   x = layers.Conv2D(filters, kernel_size=kernel_size, padding='same', data_format=data_format)(inputs)
   x = layers.BatchNormalization(axis=bn_axis)(x)
   x = layers.ReLU()(x)

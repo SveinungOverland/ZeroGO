@@ -1,4 +1,5 @@
 import numpy as np
+import os
 from Go.environment import Environment
 from NN.dcnn_v2 import Model, Mode, DataFormats
 
@@ -6,7 +7,8 @@ class NNClient:
     def __init__(self, c: float, dimension: int = 5, channel_size: int = 3):
         self.c = c
         self.dimension = dimension
-        self.model = Model.create(data_format=DataFormats.ChannelsLast, shape=(5, 5, channel_size), kernel_size=(1, 1), nr_residual_layers=10)
+        data_format = DataFormats.ChannelsFirst if os.get_env("GPU") else DataFormats.ChannelsLast
+        self.model = Model.create(data_format=data_format, shape=(5, 5, channel_size), kernel_size=(1, 1), nr_residual_layers=10)
         self.channel_size = channel_size
 
     def predict_policy(self, state: np.array, player: int) -> float:
