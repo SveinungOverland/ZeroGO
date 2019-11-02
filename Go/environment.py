@@ -24,18 +24,20 @@ class Environment:
         current_state = state[-1]
         history = state[:len(state)-1]
 
-        # Execute new move
-        new_state, status = execute_move(state=current_state, action=new_action, history=history)
-        if status != VALID_MOVE:
-            raise Exception(f"Invalid move for player {self.__player}: ({x}, {y}). Error-code: {status}\nState:\n{new_state}")
-
-        # Add move to a copy of the history
         new_history = state.copy()
-        new_history = np.append(new_history, new_state.reshape(1, 5, 5), axis=0)
+        # Execute move if the move is not a pass (PASS => Action = (-1, -1))
+        if x != -1 and y != -1:
+            # Execute new move
+            new_state, status = execute_move(state=current_state, action=new_action, history=history)
+            if status != VALID_MOVE:
+                raise Exception(f"Invalid move for player {self.__player}: ({x}, {y}). Error-code: {status}\nState:\n{new_state}")
+
+            # Add move to a copy of the history
+            new_history = np.append(new_history, new_state.reshape(1, 5, 5), axis=0)
 
         # Check if we are done!
         other_player = opponent(self.__player)
-        is_done = len(self.get_action_space(state=new_history, player=other_player)) == 0
+        is_done = len(self.get_action_space(state=new_history, player=other_player)) == 1
         
         # Swap turn
         self.__player = other_player
@@ -50,7 +52,10 @@ class Environment:
             player = self.__player
 
         #returns all actions from given state (legal)
-        return all_possible_moves(state[-1], player, history=state[:len(state)-1])
+        action_space = all_possible_moves(state[-1], player, history=state[:len(state)-1])
+
+        action_space.append(((-1, -1), state[-1]))
+        return action_space
 
     def calculate_winner(self, state) -> int:
         """
@@ -76,11 +81,12 @@ class Environment:
     def empty_board(size=5):
         return np.zeros(shape=(size, size), dtype=int)
 
-    def random_play(self, state, state_limit=3):
+    def random_play(self, state: np.array, state_limit: int = 3, max_iterations: int = 200):
         done = False
         history = state.copy()
         
-        while not done:
+        iterations = 0
+        while not done and iterations < max_iterations:
             # Get all valid movies
             moves = self.get_action_space(history)
             if len(moves) == 0:
@@ -94,6 +100,8 @@ class Environment:
 
             # Execute move
             history, done = self.simulate(history, (move_x, move_y), state_limit=state_limit)
+
+            iterations += 1
         return self.calculate_winner(history)
 
 

@@ -23,7 +23,8 @@ class NNClient:
     def train(self, state: np.array, player: int, z: float, pi: np.array):
         v, p = self.predict(state, player)
         theta = self.model.get_trunk_weights()
-        loss = self.loss(z, v, pi, p, self.c, theta)
+        loss = self.loss(z, v, pi, p[0], self.c, theta)[0][0]
+        print("Loss: ", loss)
 
         self.model.train(Mode.Policy, loss)
         self.model.train(Mode.Value, loss)
@@ -32,7 +33,15 @@ class NNClient:
         """
             l = (z - v)^2 - π^(T)*log(p) + c*||θ^2||
         """
-        return (z - v) ** 2 - pi.transpose().dot(np.log10(p))[0] + self.c * np.linalg.norm(theta)
+        print("Z: ", z)
+        print("V: ", v)
+        print("PI: ", pi)
+        print("P: ", p)
+        print("C: " , c)
+        print("Theta: ", theta)
+        print("Value1: ", (z - v) ** 2)
+        print("Value2: ", pi.transpose().dot(np.log10(p)))
+        return (z - v) ** 2 - pi.transpose().dot(np.log10(p)) # + self.c * np.linalg.norm(theta)
 
 
     def __state_to_nn_input(self, states: np.array, player: int, channel_size: int) -> np.array:
