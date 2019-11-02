@@ -22,6 +22,8 @@ class Node:
     #Policy uses upperboundpolicy π = w/n +(-) c*sqrt(ln(N)/n)
     #It changes from positive to minus, this depends on if it is the opponents turn 
     # Explore vs. Exploit
+    def quality(self):
+        return property(fget=lambda self : self.wins / (1 + self.visits))
 
     def visit(self):
         self.visits+=1

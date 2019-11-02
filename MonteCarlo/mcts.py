@@ -190,7 +190,7 @@ class MCTS:
 
 
     def build_graph(self, graph_root, tree_root, graph):
-        node = pydot.Node(id(tree_root), style='filled', fillcolor='#{:02x}6930'.format(int(tree_root.quality * 255), int(tree_root.quality * 255)), label=str(tree_root.state[1])+',Q={:.3f}'.format(tree_root.quality))
+        node = pydot.Node(id(tree_root), style='filled', fillcolor='#{:02x}6930'.format(int(tree_root.quality() * 255), int(tree_root.quality() * 255)), label=str(tree_root.state[1])+',Q={:.3f}'.format(tree_root.quality()))
         graph.add_node(node)
         for child in tree_root.children:
             self.build_graph(node, child, graph)
