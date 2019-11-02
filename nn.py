@@ -6,7 +6,7 @@ class NNClient:
     def __init__(self, c: float, dimension: int = 5, channel_size: int = 3):
         self.c = c
         self.dimension = dimension
-        self.model = Model.create(data_format=DataFormats.ChannelsLast)
+        self.model = Model.create(data_format=DataFormats.ChannelsLast, shape=(5, 5, channel_size), kernel_size=(1, 1), nr_residual_layers=10)
         self.channel_size = channel_size
 
     def predict_policy(self, state: np.array, player: int) -> float:
@@ -44,7 +44,7 @@ class NNClient:
         for row in range(self.dimension):
             dimension_2 = []
             for column in range(self.dimension):
-                cell = [1 if state[row][column] == 1 else 0 for state in states[-wanted_state_size:]] + [1 if state[row][column] == 2 else 0 for state in states[-wanted_state_size:]] + [0 for _ in range(padding)] + [player - 1]
+                cell = [1 if state[row][column] == 1 else 0 for state in states[-wanted_state_size:]] + [0 for _ in range(padding//2)] + [1 if state[row][column] == 2 else 0 for state in states[-wanted_state_size:]] + [0 for _ in range(padding//2)] + [player - 1]
                 dimension_2.append(cell)
             dimension_3.append(dimension_2)
 
