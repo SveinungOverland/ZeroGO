@@ -152,12 +152,7 @@ class Model:
     net = self.__retrieve_net(mode)
     tape = tf.GradientTape()
     gradients = tape.gradient(loss, net.trainable_variables)
-<<<<<<< HEAD
-    optimizer.apply_gradients(zip(gradients, net.trainable_variables))
-    # where is the optimizer from @Svenung 
-=======
     keras.optimizers.Adam(learning_rate).apply_gradients(zip(gradients, net.trainable_variables))
->>>>>>> debfd75fd1b96bb01065824431a721bfd4b755cd
   
   def predict(self, mode, X):
     net = self.__retrieve_net(mode)

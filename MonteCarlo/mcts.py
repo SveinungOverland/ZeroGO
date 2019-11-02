@@ -181,8 +181,18 @@ class MCTS:
         return np.append(state, board.reshape(1, self.board_size, self.board_size), axis=0)
 
 
+
     #visulize the node tree 
     def visualize_tree(self):
         graph = pydot.Dot(graph_type='graph')
         self.build_graph(None, self.root, graph)
         graph.write_png('graph.png')
+
+
+    def build_graph(self, graph_root, tree_root, graph):
+        node = pydot.Node(id(tree_root), style='filled', fillcolor='#{:02x}6930'.format(int(tree_root.quality * 255), int(tree_root.quality * 255)), label=str(tree_root.state[1])+',Q={:.3f}'.format(tree_root.quality))
+        graph.add_node(node)
+        for child in tree_root.children:
+            self.build_graph(node, child, graph)
+        if graph_root:
+            graph.add_edge(pydot.Edge(graph_root, node, label=str(tree_root.action)))
