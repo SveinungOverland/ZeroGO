@@ -27,7 +27,7 @@ Back propagation — back propagate to all the visited nodes, increase by 1
 class MCTS:
     # add the environment that the MCTS is going to train on
     # add the neural_network, This network is created ahead, instead of created here. s
-    def __init__(self,  environment , neural_network,  player_id: int,  board_size: int = 5, history_size: int = 3, steps: int = 50, c: float = 1.0, tau: float = 1.2):
+    def __init__(self,  environment , neural_network,  player_id: int,  board_size: int = 5, history_size: int = 3, steps: int = 10, c: float = 1.0, tau: float = 1.2):
         self.environment = environment
         self.neural_network = neural_network
         self.buffer = Buffer()
@@ -185,7 +185,7 @@ class MCTS:
     #visulize the node tree 
     def visualize_tree(self):
         graph = pydot.Dot(graph_type='graph')
-        self.build_graph(None, self.root, graph)
+        self.build_graph(None, self.root_node, graph)
         graph.write_png('graph.png')
 
 
