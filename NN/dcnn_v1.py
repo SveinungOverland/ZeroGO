@@ -148,11 +148,11 @@ class Model:
       raise Exception("No acceptible mode given!")
     return net
   
-  def train(self, mode: Mode, loss):
+  def train(self, mode: Mode, loss, learning_rate=0.01):
     net = self.__retrieve_net(mode)
     tape = tf.GradientTape()
     gradients = tape.gradient(loss, net.trainable_variables)
-    tf.optimizers.Adam.apply_gradients(zip(gradients, net.trainable_variables))
+    keras.optimizers.Adam(learning_rate).apply_gradients(zip(gradients, net.trainable_variables))
   
   def predict(self, mode, X):
     net = self.__retrieve_net(mode)
