@@ -26,6 +26,10 @@ class NNClient:
         theta = self.model.get_trunk_weights()
         loss = self.loss(z, v, pi, p[0], self.c, theta)[0][0]
         print("Loss: ", loss) """
+        z = np.array([z])
+        pi = np.array([pi])
+        print("Z: ", z, type(z))
+        print("PI: ", pi, type(pi))
 
         self.model.train(nn_input, z, pi)
     

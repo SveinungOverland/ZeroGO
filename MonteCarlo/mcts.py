@@ -164,13 +164,18 @@ class MCTS:
     # Helper function for the pick action fuction. Adds all the probabilities to a list to train on and gives the best action to pick action.
     def __find_best_action(self) -> tuple:
         present_node = self.root_node
-        probabilities = []
+        probabilities = np.zeros(shape=(self.board_size*self.board_size + 1))
         value = 0
         new_action = None
         # Getting the total visits of all the child nodes.
-        total_visits = sum([child.visits for child in present_node.children])
+        total_visits = present_node.visits # sum([child.visits for child in present_node.children])
+
+        print("Children length: ", len(present_node.children))
 
         for child in present_node.children:
+
+            x, y = child.action
+
             # can try to add all of them into a 9x9 matrix representing what we would get.
             visit_probability =  self.__stochasticly(child.visits, total_visits)
             
@@ -180,7 +185,7 @@ class MCTS:
                 new_action = child.action
                 self.root_node = child
 
-            probabilities.append(visit_probability)
+            probabilities[x*self.board_size + y] = visit_probability # .append(visit_probability)
         
         # Do we not need to save who is playing when running training sessions?
         self.buffer.remember_upper_conf(present_node.state, probabilities)

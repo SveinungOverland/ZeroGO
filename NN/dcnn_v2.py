@@ -145,7 +145,7 @@ class Model:
     # assuming net is a model already
     net.compile(
       optimizer=SGD(lr=learning_rate, momentum=momentum),
-      loss=['mean_squared_error', 'softmax_cross_entropy_with_logits']
+      loss=['mean_squared_error', tf.nn.softmax_cross_entropy_with_logits]
     )
     net.fit(x, [y_value, y_policy], epochs=epochs)
     # with tf.GradientTape() as tape:
