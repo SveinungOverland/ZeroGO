@@ -3,6 +3,8 @@ from .buffer import Buffer
 import numpy as np
 import random
 from math import sqrt
+
+import time
 """
 Selection — you start in the root — the state, and select a child — a move. 
     I used the upper confident bound (UCB1) to select a child.
@@ -24,7 +26,7 @@ Back propagation — back propagate to all the visited nodes, increase by 1
 class MCTS:
     # add the environment that the MCTS is going to train on
     # add the neural_network, This network is created ahead, instead of created here. s
-    def __init__(self,  environment , neural_network,  player_id: int,  board_size: int = 5, history_size: int = 3, steps: int = 1600, c: float = 1.0, tau: float = 1.2):
+    def __init__(self,  environment , neural_network,  player_id: int,  board_size: int = 5, history_size: int = 3, steps: int = 50, c: float = 1.0, tau: float = 1.2):
         self.environment = environment
         self.neural_network = neural_network
         self.buffer = Buffer()
@@ -37,18 +39,25 @@ class MCTS:
         self.board_size = board_size # The size of the board, for example nxn
         self.history_size = history_size # The max size of the state
 
+    def initialize(self, state):
+        self.root_node = Node(None, state, None, self.player_id)
+
     #Extends the MCT with both the neural network and MCTS and finds the best possible choice.
     def pick_action(self, state):
 
+        i = 0
         for _ in range(self.steps):
+            print(i)
+            i += 1
             self.tree_search(self.root_node)
 
-        return self.find_best_action()
+        return self.__find_best_action()
 
 
     def rollout(self, node: Node):
         self.environment.set_player(node.player)
         win = self.environment.random_play(node.state, self.history_size) == self.player_id
+        print("Rollout result: ", win)
         self.back_propagation(node, win)
     
     def back_propagation(self, node: Node, win: bool):
@@ -62,15 +71,12 @@ class MCTS:
     #chooses a node based on PUCT
     def choose_node(self, node: Node):
         total_visits = sum(child.visits for child in node.children)
-    
-        # Change here to give in the player_id of that node who's playing, not sure if this is correct @Anders Hallem Iversen
-        neural_policy = self.neural_network.predict_policy(node.state, node.player) # takes in the states and gives all policy values.
+        neural_policy = self.neural_network.predict_policy(node.state, node.player)[0] # takes in the states and gives all policy values.
 
         # Filter illegal moves from neural_policy
         filtered_neural_policies = []
 
-        # Here there might be a bug. the state is 5x5. where [0] = 5. and the number of actions is <=25.
-        size = len(node.state[0])
+        size = self.board_size
 
         for child in node.children:
             x, y = child.action
@@ -89,10 +95,13 @@ class MCTS:
             # hit leaf_node. Expand this node.
             if node.visits == 0: 
                 # the node has no visits and need rollout
+                start = time.time()
                 self.rollout(node)
+                end = time.time()
+                print("Rollout time: ", end - start)
             else:
                 # Node has been visited and expands for all under
-                player_opponent = self.environment.opponent(node.player)
+                player_opponent = self.environment.get_opponent(node.player)
                 node.children = [Node(action=action, state=self.__append_state(node.state, state), parent=node, player=player_opponent) for (action, state) in self.environment.get_action_space(node.state, node.player)] #expanding node with all the posible actions and states.
                 self.rollout(self.choose_node(node))
 
@@ -100,13 +109,20 @@ class MCTS:
     def train(self, training_steps: int):
         for _ in range(training_steps):
             self.buffer.clear()
-            state = self.environment.new_game(self.board_size)
+            state = self.environment.new_state(self.board_size)
+            self.initialize(state)
             done = False
 
-            self.environment.set_player(1)
+            iteration_count = 0
+
+            self.environment.set_player(self.player_id)
+            print("Starting match")
             while not done:
                 action = self.pick_action(state)
+                print("Action: " , action)
                 state, done = self.environment.simulate(state, action, state_limit=self.history_size)
+                print("Iteration: ", iteration_count)
+                iteration_count += 1
             winner = self.environment.calculate_winner(state)
 
             # For training, we want the winner value (z) to be between -1 and 1
@@ -136,7 +152,7 @@ class MCTS:
 
         for child in present_node.children:
             # can try to add all of them into a 9x9 matrix representing what we would get.
-            visit_probability =  self.stochasticly(child.visits, total_visits)
+            visit_probability =  self.__stochasticly(child.visits, total_visits)
             
             # If the childs probability is higher than the ones before that means to choose that one.
             if visit_probability > value:
@@ -158,4 +174,4 @@ class MCTS:
         return (index // self.board_size, index % self.board_size)
         
     def __append_state(self, state, board):
-        return np.append(state, board.reshape(1, self.board_size, self.board_size))
+        return np.append(state, board.reshape(1, self.board_size, self.board_size), axis=0)
