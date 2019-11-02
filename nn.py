@@ -1,22 +1,22 @@
 import numpy as np
 from Go.environment import Environment
-from NN import Model, Mode
+from NN.dcnn_v1 import Model, Mode, DataFormats
 
 class NNClient:
     def __init__(self, c: float, dimension: int = 5, N: int = 3):
         self.c = c
         self.dimension = dimension
-        self.model = Model.create()
+        self.model = Model.create(data_format=DataFormats.ChannelsLast)
         self.N = N
 
     def predict_policy(self, state: np.array, player: int) -> float:
         nn_input = self.__state_to_nn_input(state, player, self.N)
-        return self.model.predict(Mode.PolicyHead, nn_input)
+        return self.model.predict(Mode.Policy, nn_input)
 
     def predict(self, state: np.array, player: int) -> tuple:
         nn_input = self.__state_to_nn_input(state, player, self.N)
-        policy = self.model.predict(Mode.PolicyHead, nn_input)
-        value = self.model.predict(Mode.ValueHead, nn_input)
+        policy = self.model.predict(Mode.Policy, nn_input)
+        value = self.model.predict(Mode.Value, nn_input)
 
         return value, policy
     
@@ -25,8 +25,8 @@ class NNClient:
         theta = self.model.get_trunk_weights()
         loss = self.loss(z, v, pi, p, self.c, theta)
 
-        self.model.train(Mode.PolicyHead, loss)
-        self.model.train(Mode.ValueHead, loss)
+        self.model.train(Mode.Policy, loss)
+        self.model.train(Mode.Value, loss)
     
     def loss(self, z: int, v: int, pi: np.array, p: np.array, c: int, theta: np.array) -> float:
         """
