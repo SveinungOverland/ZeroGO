@@ -4,8 +4,6 @@ import copy
 import numbers
 import numpy as np
 
-TEST = 0
-
 class Game:
     def __init__(self, size):
         self.board = np.zeros((size, size), dtype=int)
@@ -57,6 +55,8 @@ class Game:
     def get_score(self):
         return calculate_score(self.board)
 
+    def get_game_state(self):
+        return np.append(history, self.board)
 
     def __revert(self):
         '''

@@ -79,7 +79,7 @@ class Environment:
     def random_play(self, state, state_limit=3):
         done = False
         history = state.copy()
-        print(history)
+        
         while not done:
             # Get all valid movies
             moves = self.get_action_space(history)
@@ -88,7 +88,8 @@ class Environment:
                 continue
             
             # Select a random move
-            move = moves[random.randint(0, len(moves) - 1)]
+            rand_index = random.randint(0, len(moves) - 1)
+            move = moves[rand_index]
             move_x, move_y = move[0]
 
             # Execute move
