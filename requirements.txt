@@ -2,3 +2,5 @@ numpy == 1.17.3
 tensorflow == 2.0
 pygame == 1.9.6
 pydot == 1.4.1
+mlflow == 1.4.0
+mflux-ai>=0.5.1

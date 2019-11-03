@@ -77,7 +77,7 @@ def create_value_head(graph, shape, filters, data_format, kernel_size):
   x = layers.ReLU()(x)
   x = layers.GlobalMaxPooling2D(data_format)(x)
   x = layers.Flatten()(x)
-  x = layers.Dense(1, activation="tanh")(x)
+  x = layers.Dense(1, activation="tanh", name='value')(x)
   return x
 
 """### Create policy head"""
@@ -89,7 +89,7 @@ def create_policy_head(graph, shape, filters, data_format, kernel_size):
   x = layers.ReLU()(x)
   x = layers.GlobalMaxPooling2D(data_format)(x)
   x = layers.Flatten()(x)
-  x = layers.Dense(shape[0] * shape[1] + 1, activation='softmax')(x)
+  x = layers.Dense(shape[0] * shape[1] + 1, activation='softmax', name='policy')(x)
   return x
 
 """## Mode class"""
@@ -145,9 +145,12 @@ class Model:
     # assuming net is a model already
     net.compile(
       optimizer=SGD(lr=learning_rate, momentum=momentum),
-      loss=['mean_squared_error', tf.nn.softmax_cross_entropy_with_logits]
+      loss=['mean_squared_error', tf.nn.softmax_cross_entropy_with_logits],
+      metrics=['accuracy'],
     )
     net.fit(x, [y_value, y_policy], epochs=epochs)
+    
+    return net.evaluate(x, [y_value, y_policy], verbose=0)
     # with tf.GradientTape() as tape:
     #   gradients = tape.gradient(tf.convert_to_tensor(loss, dtype=tf.float32), net.trainable_variables)
     #   keras.optimizers.SGD(learning_rate).apply_gradients(zip(gradients, net.trainable_variables))

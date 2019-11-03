@@ -3,15 +3,16 @@ from Go.environment import Environment
 from NN.dcnn_v2 import Model, Mode, DataFormats
 
 class NNClient:
-    def __init__(self, c: float, dimension: int = 5, channel_size: int = 3):
+    def __init__(self, c: float, dimension: int = 5, channel_size: int = 3, residual_layers: int = 10, filters=100):
         self.c = c
         self.dimension = dimension
-        self.model = Model.create(data_format=DataFormats.ChannelsLast, shape=(5, 5, channel_size), kernel_size=(1, 1), nr_residual_layers=10)
+        self.model = Model.create(data_format=DataFormats.ChannelsLast, shape=(5, 5, channel_size), kernel_size=(1, 1), nr_residual_layers=residual_layers, filters=filters)
         self.channel_size = channel_size
 
     def predict_policy(self, state: np.array, player: int) -> float:
         nn_input = self.__state_to_nn_input(state, player, self.channel_size)
         value, policy = self.model.predict(Mode.Model, nn_input)
+        
         return policy
 
     def predict(self, state: np.array, player: int) -> tuple:
@@ -26,27 +27,19 @@ class NNClient:
         theta = self.model.get_trunk_weights()
         loss = self.loss(z, v, pi, p[0], self.c, theta)[0][0]
         print("Loss: ", loss) """
-        z = np.array([z])
+        z = np.array([float(z)])
         pi = np.array([pi])
-        print("Z: ", z, type(z))
-        print("PI: ", pi, type(pi))
 
-        self.model.train(nn_input, z, pi)
+        return self.model.train(nn_input, z, pi, learning_rate=0.001)
     
-    def loss(self, z: int, v: int, pi: np.array, p: np.array, c: int, theta: np.array) -> float:
+    def loss(self, z: float, v: int, pi: np.array, p: np.array, c: int, theta: np.array) -> float:
         """
             l = (z - v)^2 - π^(T)*log(p) + c*||θ^2||
         """
-        print("Z: ", z)
-        print("V: ", v)
-        print("PI: ", pi)
-        print("P: ", p)
-        print("C: " , c)
-        print("Theta: ", theta)
-        print("Value1: ", (z - v) ** 2)
-        print("Value2: ", pi.transpose().dot(np.log10(p)))
         return (z - v) ** 2 - pi.transpose().dot(np.log10(p)) # + self.c * np.linalg.norm(theta)
 
+    def get_model(self):
+        return self.model.model
 
     def __state_to_nn_input(self, states: np.array, player: int, channel_size: int) -> np.array:
         # This be correct padding?
@@ -61,6 +54,7 @@ class NNClient:
                 dimension_2.append(cell)
             dimension_3.append(dimension_2)
 
-        return np.array([dimension_3])
+        nn_input = np.array([dimension_3], dtype=float)
+        return nn_input
         # I heard you like readable code, so I made it in one line ^^
         #return np.array([[[[1 if state[row][column] == 1 else 0 for state in states] + [0 for _ in range(padding)] + [1 if state[row][column] == 2 else 0 for state in states] + [0 for _ in range(padding)] + [player - 1] for column in range(self.dimension)] for row in range(self.dimension)]])

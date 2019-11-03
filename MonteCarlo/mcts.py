@@ -46,10 +46,8 @@ class MCTS:
     #Extends the MCT with both the neural network and MCTS and finds the best possible choice.
     def pick_action(self, state):
         visualize = True
-        i = 0
+        
         for _ in range(self.steps):
-            print(i)
-            i += 1
             self.tree_search(self.root_node)
 
         if visualize:
@@ -61,7 +59,6 @@ class MCTS:
     def rollout(self, node: Node):
         self.environment.set_player(node.player)
         win = self.environment.random_play(node.state, self.history_size) == self.player_id
-        print("Rollout result: ", win)
         self.back_propagation(node, win)
     
     def back_propagation(self, node: Node, win: bool):
@@ -115,6 +112,7 @@ class MCTS:
             state = self.environment.new_state(self.board_size)
             self.initialize(state)
             done = False
+            metrics = None
 
             iteration_count = 0
 
@@ -132,7 +130,7 @@ class MCTS:
                 else:
                     has_passed = x == -1 and y == -1
 
-                print("Action: " , action)
+                # print("Action: " , action)
                 self.environment.set_player(current_player)
                 try:
                     state, done = self.environment.simulate(state, action, state_limit=self.history_size)
@@ -140,8 +138,6 @@ class MCTS:
                     print(e)
                     print("Error State: ", state)
                 current_player = 2 if current_player == 1 else 1
-                print("State:  ", state[-1])
-                print("Iteration: ", iteration_count)
                 iteration_count += 1
             winner = self.environment.calculate_winner(state)
 
@@ -152,10 +148,16 @@ class MCTS:
 
             # For each action done in all the game, calculate loss and train NN
             current_player = 1
+            training_steps_done = 0
+            num_of_training_steps = len(self.buffer.data)
             for (state, probabilities) in self.buffer.data:
                 # Get values from the NN
                 current_player = 2 if current_player == 1 else 1
-                self.neural_network.train(state, current_player, z, np.array(probabilities))
+                metrics = self.neural_network.train(state, current_player, z, np.array(probabilities))
+                training_steps_done += 1
+                print("Training progress: ", training_steps_done, "/", num_of_training_steps)
+            print("Training complete!")
+            return metrics
 
  # In trainning we want to add intelegent randomness and therefore use stochastic functions         
     def __stochasticly(self, target_node: int, node_sum: int) -> float:
@@ -169,8 +171,6 @@ class MCTS:
         new_action = None
         # Getting the total visits of all the child nodes.
         total_visits = present_node.visits # sum([child.visits for child in present_node.children])
-
-        print("Children length: ", len(present_node.children))
 
         for child in present_node.children:
 
