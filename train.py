@@ -58,6 +58,7 @@ elapsed_train_step = 0
 iteration = 0
 print(time.time())
 while time_end > time.time():
+    print(f"Starting iteration {iteration}")
     elapsed_train_step += 1
     metrics = agent.train(training_steps=steps)
     print(f"Iteration {iteration} complete!")
