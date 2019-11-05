@@ -21,6 +21,7 @@ import time
 
 # %%
 import mlflow.tensorflow
+import mlflow.keras
 import mflux_ai
 
 # %% [markdown]
@@ -40,28 +41,28 @@ c = 1.5
 
 # %%
 nn = NN(c, board_size, channel_size, residual_layers=30, filters=100)
-agent = MCTS(Environment(), nn, BLACK, board_size, channel_size//2)
+env = Environment(dimension=board_size, max_state_size=3)
+agent = MCTS(environment=env, neural_network=nn, player_id=BLACK)
 
 
 # %%
 steps = 1
-time_end = datetime.strptime('03/11/19 12:00:00', '%d/%m/%y %H:%M:%S').timestamp()
-metric_upload_rate = 100
-print(time_end)
-
-# %%
-mflux_ai.init("YQKDmPhMS9UuYEZ9hgZ8Fw")
+time_end = datetime.strptime('06/12/19 14:00:00', '%d/%m/%y %H:%M:%S').timestamp()
+metric_upload_rate = 1
 
 
 # %%
 elapsed_train_step = 0
 iteration = 0
-print(time.time())
 while time_end > time.time():
+    mflux_ai.init("YQKDmPhMS9UuYEZ9hgZ8Fw")
+
     print(f"Starting iteration {iteration}")
     elapsed_train_step += 1
+    start = time.time()
     metrics = agent.train(training_steps=steps)
-    print(f"Iteration {iteration} complete!")
+    end = time.time()
+    print(f"Iteration {iteration} complete! Time used on iteration: {end - start}s")
 
     if elapsed_train_step >= metric_upload_rate:
         print("Metrics: ", metrics)
@@ -73,11 +74,11 @@ while time_end > time.time():
         mlflow.log_metric("value_accuracy", metrics[3])
         mlflow.log_metric("policy_accuracy", metrics[4])
 
-        mlflow.tensorflow.log_model(nn.get_model(), "model")
+        mlflow.keras.log_model(nn.get_model(), "model")
 
         elapsed_train_step = 0
 
-        nn.get_model().save(f"models/{iteration}/")
+        nn.model.save(f"models/v1/{iteration}/")
 
     iteration += 1
 

@@ -4,12 +4,13 @@ from Go.environment import Environment
 from NN.dcnn_v2 import Model, Mode, DataFormats
 
 class NNClient:
-    def __init__(self, c: float, dimension: int = 5, channel_size: int = 3, residual_layers: int = 10, filters=100):
+    def __init__(self, c: float, dimension: int = 5, channel_size: int = 3, residual_layers: int = 10, filters=100, learning_rate=0.001):
         self.c = c
         self.dimension = dimension
         data_format = DataFormats.ChannelsFirst if os.getenv("GPU") else DataFormats.ChannelsLast
         self.model = Model.create(data_format=data_format, shape=(5, 5, channel_size), kernel_size=(1, 1), nr_residual_layers=residual_layers, filters=filters)
         self.channel_size = channel_size
+        self.learning_rate = learning_rate
 
     def predict_policy(self, state: np.array, player: int) -> float:
         nn_input = self.__state_to_nn_input(state, player, self.channel_size)
@@ -32,7 +33,7 @@ class NNClient:
         z = np.array([float(z)])
         pi = np.array([pi])
 
-        return self.model.train(nn_input, z, pi, learning_rate=0.001)
+        return self.model.train(nn_input, z, pi, learning_rate=self.learning_rate)
     
     def loss(self, z: float, v: int, pi: np.array, p: np.array, c: int, theta: np.array) -> float:
         """

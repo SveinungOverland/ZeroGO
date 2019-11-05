@@ -47,19 +47,52 @@ def test_all_possible_moves():
         x, y = action
         valid_moves[i] = (x, y, board)
 
-    print(valid_moves)
-
-    actuals = assert_valid_move(valid_moves, [
+    expected_moves = [
         (0, 3, expected_2),
         (1, 3, expected_3),
         (0, 2, expected_1),
-        (3, 0, expected_4)
-    ])
+        (3, 0, expected_4),
+        (-1,-1, state),
+    ]
+
+    actuals = assert_valid_move(valid_moves, expected_moves)
 
     for (actual, x, y, b) in actuals:
         if not actual:
             print(x, y, b)
         assert actual
+
+    assert len(valid_moves) == len(expected_moves)
+
+
+def test_all_possible_moves_2():
+    player = WHITE
+    state = np.array([[
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0]
+    ],
+    [
+        [0, 0, 0, 2, 0],
+        [0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0]
+    ],
+    [
+        [1, 0, 0, 2, 0],
+        [0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0]
+    ]])
+
+    valid_moves = all_possible_moves(state=state[-1], player=player, history=state[:-1])
+
+
+    assert True
 
 def assert_valid_move(valid_moves, expected_list):
     actual = set()

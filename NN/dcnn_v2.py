@@ -149,7 +149,7 @@ class Model:
     net = self.__retrieve_net(Mode.Model)
     # assuming net is a model already
     net.compile(
-      optimizer=SGD(lr=learning_rate, momentum=momentum),
+      optimizer=SGD(learning_rate=learning_rate, momentum=momentum),
       loss=['mean_squared_error', tf.nn.softmax_cross_entropy_with_logits],
       metrics=['accuracy'],
     )

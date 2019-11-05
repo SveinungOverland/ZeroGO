@@ -15,7 +15,7 @@ class Mock_environment():
     def calculate_winner(self, state) -> int:
         return 1
 
-    def random_play(self, state, history_size):
+    def rollout(self, state, start_player):
         return 1
 
     def get_player(self):
@@ -48,7 +48,7 @@ class Mock_NN():
 mock_environment = Mock_environment()
 mock_NN = Mock_NN()
 
-mcts_object = MCTS(environment= mock_environment , neural_network= mock_NN, player_id= 1, board_size = 5,history_size = 3,steps = 1)
+mcts_object = MCTS(environment= mock_environment , neural_network= mock_NN, player_id= 1,steps = 1)
 
 #testing the backpropagation of the mcts
 def test_back_propagation():

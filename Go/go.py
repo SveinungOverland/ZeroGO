@@ -12,6 +12,8 @@ ERROR_OCCUPIED = 501
 ERROR_SELF_CAPTURE = 502
 ERROR_KO = 503
 
+PASS_MOVE = (-1, -1)
+
 def execute_move(state, action, history=None):
     """
         Executes a given action ((player, x, y)) on a given state (numpy.ndarray)
@@ -83,7 +85,14 @@ def all_possible_moves(state, player, history=None):
     board = state.copy()
 
     valid_moves = []
+
+    # Check if the last three boards are equal, if so there has been two passes -> game over -> No more moves to do
+    if history is not None and len(history) >= 2:
+        if(np.array_equal(board, history[-1]) and np.array_equal(board, history[-2])):
+            # Two passes has been executed, no action space
+            return []
     
+    # Calculate all valid moves
     for row_index, row in enumerate(board):
         for col_index, col in enumerate(row):
             if col != EMPTY: continue
@@ -92,11 +101,11 @@ def all_possible_moves(state, player, history=None):
             if status == VALID_MOVE:
                 valid_moves.append(((row_index, col_index), new_state))
     
-    
+    # Add pass as a valid move
+    valid_moves.append((PASS_MOVE, board))
+
     return valid_moves
     
-
-
 def capture_group(board, group):
     '''
         Checks if the group is captured and if so removes the group from the given board

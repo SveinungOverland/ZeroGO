@@ -27,7 +27,7 @@ Back propagation — back propagate to all the visited nodes, increase by 1
 class MCTS:
     # add the environment that the MCTS is going to train on
     # add the neural_network, This network is created ahead, instead of created here. s
-    def __init__(self,  environment , neural_network,  player_id: int,  board_size: int = 5, history_size: int = 3, steps: int = 10, c: float = 1.0, tau: float = 1.2):
+    def __init__(self,  environment , neural_network,  player_id: int, steps: int = 10, c: float = 1.0, tau: float = 1.2):
         self.environment = environment
         self.neural_network = neural_network
         self.buffer = Buffer()
@@ -37,14 +37,12 @@ class MCTS:
         self.tau = tau
         self.steps = steps
 
-        self.board_size = board_size # The size of the board, for example nxn
-        self.history_size = history_size # The max size of the state
-
-    def initialize(self, state):
+    def initialize_root(self, state):
         self.root_node = Node(None, state, None, self.player_id)
 
     #Extends the MCT with both the neural network and MCTS and finds the best possible choice.
     def pick_action(self, state):
+        self.initialize_root(state)
         visualize = True
         
         for _ in range(self.steps):
@@ -57,8 +55,7 @@ class MCTS:
 
 
     def rollout(self, node: Node):
-        self.environment.set_player(node.player)
-        win = self.environment.random_play(node.state, self.history_size) == self.player_id
+        win = self.environment.rollout(state=node.state, start_player=node.player) == self.player_id
         self.back_propagation(node, win)
     
     def back_propagation(self, node: Node, win: bool):
@@ -77,7 +74,7 @@ class MCTS:
         # Filter illegal moves from neural_policy
         filtered_neural_policies = []
 
-        size = self.board_size
+        size = self.environment.get_dimension()
 
         for child in node.children:
             x, y = child.action
@@ -99,8 +96,8 @@ class MCTS:
                 self.rollout(node)
             else:
                 # Node has been visited and expands for all under
-                player_opponent = self.environment.get_opponent(node.player)
-                node.children = [Node(action=action, state=self.__append_state(node.state, state), parent=node, player=player_opponent) for (action, state) in self.environment.get_action_space(node.state, node.player)] #expanding node with all the posible actions and states.
+                player_opponent = self.environment.get_next_player(node.player)
+                node.children = [Node(action=action, state=self.__append_state(node.state, state), parent=node, player=player_opponent) for (action, state) in self.environment.get_action_space(node.state, player_opponent)] #expanding node with all the posible actions and states.
                 if len(node.children) == 0:
                     return
                 self.rollout(self.choose_node(node))
@@ -109,35 +106,24 @@ class MCTS:
     def train(self, training_steps: int):
         for _ in range(training_steps):
             self.buffer.clear()
-            state = self.environment.new_state(self.board_size)
-            self.initialize(state)
+            state = self.environment.new_state()
+            self.initialize_root(state)
             done = False
             metrics = None
 
             iteration_count = 0
 
             current_player = self.player_id
-            self.environment.set_player(current_player)
-            has_passed = False
             while not done:
                 action = self.pick_action(state)
 
-                # Handle pass check
-                x, y = action
-                if has_passed and x == -1 and y == -1:
-                    # Both has passed, the game is done
-                    break
-                else:
-                    has_passed = x == -1 and y == -1
-
                 # print("Action: " , action)
-                self.environment.set_player(current_player)
                 try:
-                    state, done = self.environment.simulate(state, action, state_limit=self.history_size)
+                    state, done = self.environment.simulate(state, action, player=current_player)
+                    current_player = self.environment.get_next_player(current_player)
                 except Exception as e:
                     print(e)
                     print("Error State: ", state)
-                current_player = 2 if current_player == 1 else 1
                 iteration_count += 1
             winner = self.environment.calculate_winner(state)
 
@@ -166,7 +152,7 @@ class MCTS:
     # Helper function for the pick action fuction. Adds all the probabilities to a list to train on and gives the best action to pick action.
     def __find_best_action(self) -> tuple:
         present_node = self.root_node
-        probabilities = np.zeros(shape=(self.board_size*self.board_size + 1))
+        probabilities = np.zeros(shape=(self.environment.get_dimension()*self.environment.get_dimension() + 1))
         value = 0
         new_action = None
         # Getting the total visits of all the child nodes.
@@ -185,8 +171,8 @@ class MCTS:
                 new_action = child.action
                 self.root_node = child
 
-            probabilities[x*self.board_size + y] = visit_probability # .append(visit_probability)
-        
+            probabilities[x*self.environment.get_dimension() + y] = visit_probability # .append(visit_probability)
+
         # Do we not need to save who is playing when running training sessions?
         self.buffer.remember_upper_conf(present_node.state, probabilities)
 
@@ -196,10 +182,10 @@ class MCTS:
         return new_action
 
     def __index_to_action(self, index):
-        return (index // self.board_size, index % self.board_size)
+        return (index // self.environment.get_dimension(), index % self.environment.get_dimension())
         
     def __append_state(self, state, board):
-        return np.append(state, board.reshape(1, self.board_size, self.board_size), axis=0)
+        return np.append(state, board.reshape(1, self.environment.get_dimension(), self.environment.get_dimension()), axis=0)
 
 
 
