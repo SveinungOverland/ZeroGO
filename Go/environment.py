@@ -98,8 +98,3 @@ class Environment:
             current_player = self.get_next_player(current_player)
             iterations += 1
         return self.calculate_winner(history)
-
-
-
-
-

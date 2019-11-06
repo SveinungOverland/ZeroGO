@@ -97,7 +97,7 @@ class MCTS:
             else:
                 # Node has been visited and expands for all under
                 player_opponent = self.environment.get_next_player(node.player)
-                node.children = [Node(action=action, state=self.__append_state(node.state, state), parent=node, player=player_opponent) for (action, state) in self.environment.get_action_space(node.state, player_opponent)] #expanding node with all the posible actions and states.
+                node.children = [Node(action=action, state=self.__append_state(node.state, state), parent=node, player=player_opponent) for (action, state) in self.environment.get_action_space(node.state, node.player)] #expanding node with all the posible actions and states.
                 if len(node.children) == 0:
                     return
                 self.rollout(self.choose_node(node))
