@@ -7,10 +7,10 @@ import numpy as np
 
 class Agent():
     def __init__(self, player: int):
-        self.nn_wrapper = NNClient(c=1.0, dimension=5, channel_size=7, residual_layers=10, filters=100)
-        self.env = Environment(dimension=5, max_state_size=3)
-        self.mcts = MCTS(environment=self.env, neural_network=self.nn_wrapper, player_id=player, steps=50)
-        self.player = player
+        self.nn_wrapper: NNClient = NNClient(c=1.0, dimension=5, channel_size=7, residual_layers=10, filters=100)
+        self.env: Environment = Environment(dimension=5, max_state_size=3)
+        self.mcts: MCTS = MCTS(environment=self.env, neural_network=self.nn_wrapper, player_id=player, steps=50)
+        self.player: int = player
 
     def initialize(self, state):
         self.mcts.initialize_root(state)

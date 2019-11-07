@@ -43,13 +43,9 @@ class MCTS:
     #Extends the MCT with both the neural network and MCTS and finds the best possible choice.
     def pick_action(self, state):
         self.initialize_root(state)
-        visualize = True
         
         for _ in range(self.steps):
             self.tree_search(self.root_node)
-
-        if visualize:
-            self.visualize_tree()
 
         return self.__find_best_action()
 
