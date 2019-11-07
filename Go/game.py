@@ -56,7 +56,7 @@ class Game:
         return calculate_score(self.board)
 
     def get_game_state(self):
-        return np.append(history, self.board)
+        return np.append(history, self.board) # NxSizexSize
 
     def __revert(self):
         '''
