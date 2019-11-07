@@ -3,6 +3,9 @@ from Go.go import BLACK, WHITE, PASS_MOVE
 import numpy as np
 import time
 
+import mlflow.keras
+import mflux_ai
+
 # Play_game plays a game between two agents and returns the player_id of the winner
 def play_game(agent_a: Agent, agent_b: Agent, max_game_iterations: int, verbose: bool = False):
     # Initialize game state
@@ -68,32 +71,61 @@ def play_and_train(agent_a: Agent, agent_b: Agent, games_to_play: int = 1, max_g
     
     return agent_a_wins, agent_b_wins, metrics_a, metrics_b
 
-def train(agent_a: Agent, agent_b: Agent, stop_time: int, save_path: str):
+def train(agent_a: Agent, agent_b: Agent, stop_time: int, save_path: str, verbose: bool = False):
     run_id = int(time.time())
 
     a = agent_a
     b = agent_b
 
+    iteration = 0
+
     while stop_time > time.time():
-        a_wins, b_wins, a_metrics, b_metrics = play_and_train(a, b, games_to_play=1, max_game_iterations=50, verbose=True)
+        mflux_ai.init("YQKDmPhMS9UuYEZ9hgZ8Fw")
+        a_wins, b_wins, a_metrics, b_metrics = play_and_train(a, b, games_to_play=1, max_game_iterations=50, verbose=verbose)
 
         # Check who is the surviving agent
+        metrics_to_save = None
+        agent_to_save = None
         if a_wins > b_wins:
             # Make new agent of b and save a
+            agent_to_save = a
+            metrics_to_save = a_metrics
             b = Agent(b.player)
-
 
         else:
             # Make new agent of a and save b
+            agent_to_save = b
+            metrics_to_save = b_metrics
             a = Agent(a.player)
+
+        if verbose:
+            print(f"A: {a_wins} wins\tB: {b_wins}")
+            print(f"Starting to save model for iteration: {iteration}")
+
+        # Log metrics and save model
+        mlflow.log_param("version", "v2")
+        mlflow.log_param("iteration", iteration)
+        mlflow.log_metric("loss", metrics_to_save[0])
+        mlflow.log_metric("value_loss", metrics_to_save[1])
+        mlflow.log_metric("policy_loss", metrics_to_save[2])
+        mlflow.log_metric("value_accuracy", metrics_to_save[3])
+        mlflow.log_metric("policy_accuracy", metrics_to_save[4])
+
+        mlflow.keras.log_model(agent_to_save.get_model(), "model")
+
+        agent_to_save.save(f"{save_path}/{run_id}/{iteration}/")
+
+        iteration += 1
     
+
+from datetime import datetime 
 
 a = Agent(BLACK)
 b = Agent(WHITE)
 
 time_end = datetime.strptime('06/12/19 14:00:00', '%d/%m/%y %H:%M:%S').timestamp()
 
-train(a, b, iterations=1, stop_time=time_end, verbose=True)
+train(a, b, stop_time=time_end, save_path="models/v2/", verbose=True)
 
 
 
