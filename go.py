@@ -5,6 +5,8 @@ from Go.game import Game
 from agent import Agent
 import sys
 import numpy as np
+from threading import Thread
+import argparse
 
 class Button:
     def __init__(self, x, y, width, height, color, screen, text):
@@ -45,6 +47,8 @@ class BoardView:
         width=100, height=40, color=(255, 255, 255), screen=screen, text="Pass")
         self.screen = screen
 
+        self.render_shadow = True
+
     def show(self):
         # Set background
         self.screen.fill((237, 181, 101))
@@ -56,11 +60,12 @@ class BoardView:
 
         piece_color = (0, 0, 0, 100) if self.is_black else (255, 255, 255, 100)
 
-        #Render shadow piece
-        row, col = self.shadow_piece
-        x_pos = int(self.x + col * self.line_gap)
-        y_pos = int(self.y + row * self.line_gap)
-        pygame.draw.circle(self.screen, (piece_color), (x_pos, y_pos), int(self.radius - self.radius / 5))
+        if self.render_shadow:
+            #Render shadow piece
+            row, col = self.shadow_piece
+            x_pos = int(self.x + col * self.line_gap)
+            y_pos = int(self.y + row * self.line_gap)
+            pygame.draw.circle(self.screen, (piece_color), (x_pos, y_pos), int(self.radius - self.radius / 5))
 
 
         # Render all pieces.
@@ -137,23 +142,49 @@ def agent_move():
     change_player_turn(not player1_turn)
     execute_move()
 
-turns = {
-    'player_1': agent_move,
-    'player_2': agent_move,
-}
-
 def execute_move():
     if player1_turn:
-        turns["player_1"]()
+        thread = Thread(target=turns["player_1"], args=())
     else:
-        turns["player_2"]()
-     
+        thread = Thread(target=turns["player_2"], args=())
+    
+    thread.start()
+
+parser = argparse.ArgumentParser(description="Go game")
+parser.add_argument("-mode", "--mode", type=str, help="Define players, (e.g 1v1, 1va, ava)", default="1va")
+
+args = parser.parse_args()
+mode = args.mode
+
+if mode == "1v1":
+    turns = {
+        "player_1": player_move,
+        "player_2": player_move
+    }
+elif mode == "1va":
+    turns = {
+        "player_1": player_move,
+        "player_2": agent_move
+    }
+elif mode == "av1":
+    turns = {
+        "player_1": agent_move,
+        "player_2": player_move
+    }
+elif mode == "ava":
+    turns = {
+        "player_1": agent_move,
+        "player_2": agent_move
+    }
+
+    board.render_shadow = False
+else:
+    raise Exception("Fuck you mate, y u do dis?")
 
 # Run until the user asks to quit
 running = True
 execute_move()
 while running:
-
     # Did the user click the window close button?
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
