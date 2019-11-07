@@ -46,3 +46,9 @@ class Agent():
             print("Training complete")
 
         return metrics
+
+    def save(self, path):
+        self.nn_wrapper.model.save(path)
+
+    def get_model(self):
+        return self.nn_wrapper.get_model()
