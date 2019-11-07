@@ -57,7 +57,9 @@ class Game:
         return calculate_score(self.board)
 
     def get_game_state(self):
-        return np.append(np.array(self.history).reshape(len(self.history), self.size, self.size), self.board.reshape(1, self.size, self.size), axis=0) # NxSizexSize
+        state = np.append(np.array(self.history).reshape(len(self.history), self.size, self.size), self.board.reshape(1, self.size, self.size), axis=0) # NxSizexSize
+        state = state.astype(int)
+        return state
 
     def __revert(self):
         '''

@@ -75,13 +75,25 @@ def train(agent_a: Agent, agent_b: Agent, stop_time: int, save_path: str):
     b = agent_b
 
     while stop_time > time.time():
-        play_and_train(a, b, games_to_play=1)
+        a_wins, b_wins, a_metrics, b_metrics = play_and_train(a, b, games_to_play=1, max_game_iterations=50, verbose=True)
+
+        # Check who is the surviving agent
+        if a_wins > b_wins:
+            # Make new agent of b and save a
+            b = Agent(b.player)
+
+
+        else:
+            # Make new agent of a and save b
+            a = Agent(a.player)
     
 
 a = Agent(BLACK)
 b = Agent(WHITE)
 
-train(a, b, iterations=1, verbose=True)
+time_end = datetime.strptime('06/12/19 14:00:00', '%d/%m/%y %H:%M:%S').timestamp()
+
+train(a, b, iterations=1, stop_time=time_end, verbose=True)
 
 
 
