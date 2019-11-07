@@ -1,8 +1,10 @@
 # Import and initialize the pygame library
 import pygame
-pygame.init()
 pygame.font.init()
 from Go.game import Game
+from agent import Agent
+import sys
+import numpy as np
 
 class Button:
     def __init__(self, x, y, width, height, color, screen, text):
@@ -31,7 +33,6 @@ class BoardView:
         self.height = height
 
         self.dimension = dimension
-        #self.board = np.zeros([dimension, dimension])
         self.go = Game(dimension)
         self.board = self.go.get_board()
         self.shadow_piece = (int(dimension // 2), int(dimension // 2))
@@ -102,8 +103,55 @@ board_y = 50 + line_gap / 2
 
 board = BoardView(screen, board_x, board_y, board_width, board_height, dimension=dimension)
 
+global can_click_on_board
+can_click_on_board = False
+player1_turn = True
+
+
+agent_black = Agent(1)
+agent_white = Agent(2)
+
+def change_can_click_on_board(value):
+    global can_click_on_board
+    can_click_on_board = value
+
+def change_player_turn(value):
+    global player1_turn
+    player1_turn = value
+
+def player_move():
+    change_can_click_on_board(True)
+
+def agent_move():
+    print("Current game state: {}".format(board.go.get_game_state()))
+    if player1_turn:
+        x, y = agent_black.pick_action(state=board.go.get_game_state())
+        print(f"Move: {x}, {y}")
+    else:
+        x, y = agent_white.pick_action(state=board.go.get_game_state())
+        print(f"Move: {x}, {y}")
+
+    board.go.make_move(x, y)
+    board.board = board.go.get_board()
+    board.is_black = not board.is_black
+    change_player_turn(not player1_turn)
+    execute_move()
+
+turns = {
+    'player_1': agent_move,
+    'player_2': agent_move,
+}
+
+def execute_move():
+    if player1_turn:
+        turns["player_1"]()
+    else:
+        turns["player_2"]()
+     
+
 # Run until the user asks to quit
 running = True
+execute_move()
 while running:
 
     # Did the user click the window close button?
@@ -123,6 +171,9 @@ while running:
                 board.move_shadow(row=row, column=column)
                 
         elif event.type == pygame.MOUSEBUTTONUP:
+            if not can_click_on_board:
+                continue
+
             x, y = pygame.mouse.get_pos()
             if board.button.collision(x, y):
                 board.is_black = not board.is_black
@@ -133,6 +184,11 @@ while running:
                 column = int(column)
                 if row >= 0 and row < dimension and column >= 0 and column < dimension:
                     board.place_piece(row, column)
+            
+            change_can_click_on_board(False)
+            change_player_turn(not player1_turn)
+            execute_move()
+
 
 
     screen.fill((0, 0, 0))
@@ -141,6 +197,3 @@ while running:
 
     # Flip the display
     pygame.display.flip()
-
-# Done! Time to quit.
-pygame.quit()

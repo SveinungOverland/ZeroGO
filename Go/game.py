@@ -6,6 +6,7 @@ import numpy as np
 
 class Game:
     def __init__(self, size):
+        self.size = size
         self.board = np.zeros((size, size), dtype=int)
         self.history = [] # np.ndarrays
         self.moves = [] # [(x, y, player)]
@@ -56,7 +57,7 @@ class Game:
         return calculate_score(self.board)
 
     def get_game_state(self):
-        return np.append(history, self.board) # NxSizexSize
+        return np.append(np.array(self.history).reshape(len(self.history), self.size, self.size), self.board.reshape(1, self.size, self.size), axis=0) # NxSizexSize
 
     def __revert(self):
         '''
