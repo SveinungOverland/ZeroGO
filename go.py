@@ -46,6 +46,7 @@ class BoardView:
         self.button = Button(x=self.x, y=self.height + self.line_gap / 2,
         width=100, height=40, color=(255, 255, 255), screen=screen, text="Pass")
         self.screen = screen
+        self.last_move = None
 
         self.render_shadow = True
 
@@ -81,6 +82,13 @@ class BoardView:
                     y_pos = int(self.y + row_index * self.line_gap)
                     pygame.draw.circle(self.screen, (255, 255, 255),
                                        (x_pos, y_pos), self.radius)
+        
+        # Render last move ring
+        if self.last_move:
+            x = int(self.x + self.last_move[1] * self.line_gap)
+            y = int(self.y + self.last_move[0] * self.line_gap)
+            pygame.draw.circle(self.screen, (255, 0, 0), (x, y), int(self.radius / 1.2), 1)
+        
         self.button.show()
 
     def place_piece(self, row, column):
@@ -89,6 +97,7 @@ class BoardView:
         self.board = self.go.get_board()
 
         self.is_black = self.go.get_current_turn() == 1
+        self.last_move = (row, column)
 
     def move_shadow(self, row, column):
         self.shadow_piece = (row, column)
@@ -141,6 +150,8 @@ def agent_move():
     board.is_black = not board.is_black
     change_player_turn(not player1_turn)
     execute_move()
+    player, x, y = board.go.moves[-1]
+    board.last_move = (x, y)
 
 def execute_move():
     if player1_turn:
@@ -224,7 +235,6 @@ while running:
 
     screen.fill((0, 0, 0))
     board.show()
-    #button.show()
 
     # Flip the display
     pygame.display.flip()

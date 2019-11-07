@@ -9,7 +9,7 @@ class Game:
         self.size = size
         self.board = np.zeros((size, size), dtype=int)
         self.history = [] # np.ndarrays
-        self.moves = [] # [(x, y, player)]
+        self.moves = [] # [(player, x, y)]
 
         self.__player_turn = BLACK # Decides which player has the turn
         self.game_over = False
