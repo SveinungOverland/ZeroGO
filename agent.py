@@ -44,7 +44,7 @@ class Agent():
         return metrics
 
     def train_action(self, state: np.array, z: int, probabilities: np.array):
-        return self.nn_wrapper.train(state, self.player, x, np.array(probabilties))
+        return self.nn_wrapper.train(state, self.player, z, np.array(probabilities))
 
     def save(self, path, overwrite: bool = False):
         self.nn_wrapper.model.save(path, overwrite=overwrite)

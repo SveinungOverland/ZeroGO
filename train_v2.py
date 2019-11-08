@@ -113,11 +113,11 @@ def train_and_save(agent: Agent, games_to_play: int, save_path: str, max_game_it
         np.save(f"{save_path}/{TRAINING_DATA_DIR}/{TRAINING_DATA_FILE_NAME}_{i}.npy", training_data)
 
         # Log and save model
-        if (model_save_rate >= 0 and model_save_rate%i == 0) or model_save_rate == 0:
+        if (model_save_rate >= 0 and (i == 0 or model_save_rate%i == 0)) or model_save_rate == 0:
             save_and_log(agent, metrics, save_path, i, log=True, overwrite=True)
 
         if verbose:
-            print(f"Finished training and saving game {i}/{games_to_play}")
+            print(f"Finished training and saving game {i+1}/{games_to_play}")
 
     return metrics
 
@@ -149,7 +149,7 @@ def retrain(agent: Agent, training_batch: int, training_loops: int, save_path: s
                 break
             
             # Extract training data
-            training_data = np.load(f"{save_path}/{TRAINING_DATA_DIR}/{TRAINING_DATA_FILE_NAME}_{i}.npy")
+            training_data = np.load(f"{save_path}/{TRAINING_DATA_DIR}/{TRAINING_DATA_FILE_NAME}_{i}.npy", allow_pickle=True)
             numb_of_trained_batches += len(training_data)
             
             # Train on training data
@@ -184,7 +184,7 @@ def evaluate(agent_best: Agent, agent_latest: Agent, games_to_play: int, save_pa
             latest_agent_wins += 1
 
         if verbose:
-            print(f"The winner of game {i} is {winner}!")
+            print(f"The winner of game {i} is {winner}! {i+1}/{games_to_play} games completed!")
 
     # Evaluate the games, if the latest player win over 55% percent of the games, new best player is declared
     latest_player_win_percentage = latest_agent_wins/games_to_play

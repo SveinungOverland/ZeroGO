@@ -38,7 +38,7 @@ while training_end_time > time.time():
     # Evaluating and choosing between the latest_agent and the best_agent
 
     # Evaluate and pick best agent
-    new_best_agent = evaluate(best_agent, latest_agent, games_to_play=5, save_path=save_path, verbose=True, verbose_play=True)
+    new_best_agent = evaluate(best_agent, latest_agent, games_to_play=3, save_path=save_path, verbose=True, verbose_play=True)
     
     metrics = None
     if new_best_agent == best_agent:
