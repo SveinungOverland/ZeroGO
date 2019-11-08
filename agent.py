@@ -18,8 +18,9 @@ class Agent():
     def pick_action(self, state):
         return self.mcts.pick_action(state)
 
-    def train(self, won: bool, other_buffer: Buffer, verbose: bool = False):
-        training_iteration_count = len(other_buffer.data) + len(self.mcts.buffer.data)
+    def train(self, won: bool, verbose: bool = False):
+        training_iteration_count = len(self.mcts.buffer.data)
+    
         current_iteration_count = 0
         metrics = None
 
@@ -29,26 +30,24 @@ class Agent():
         # Train on own buffer
         z = 1 if won else -1
         for (state, probabilities) in self.mcts.buffer.data:
-            self.nn_wrapper.train(state, self.player, z, np.array(probabilities))
-            current_iteration_count += 1
-            if verbose:
-                print(f"Training iteration: {current_iteration_count}/{training_iteration_count}")
-        
-        # Train on external buffer
-        z = 1 if not won else -1
-        for (state, probabilities) in other_buffer.data:
             metrics = self.nn_wrapper.train(state, self.player, z, np.array(probabilities))
             current_iteration_count += 1
             if verbose:
                 print(f"Training iteration: {current_iteration_count}/{training_iteration_count}")
-
+            
+            # Because next move represents the move of the opponent, the z value needs to be rotated
+            z = 1 if z == -1 else -1
+        
         if verbose:
             print("Training complete")
 
         return metrics
 
-    def save(self, path):
-        self.nn_wrapper.model.save(path)
+    def train_action(self, state: np.array, z: int, probabilities: np.array):
+        return self.nn_wrapper.train(state, self.player, x, np.array(probabilties))
+
+    def save(self, path, overwrite: bool = False):
+        self.nn_wrapper.model.save(path, overwrite=overwrite)
 
     def get_model(self):
         return self.nn_wrapper.get_model()
