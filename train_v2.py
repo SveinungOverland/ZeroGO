@@ -6,6 +6,8 @@ import os
 import random
 from Utils.rotation import rotate_training_data
 
+from multiprocessing import Process, Queue
+
 import mlflow.keras
 import mflux_ai
 
@@ -70,24 +72,101 @@ def play_game(agent_a: Agent, agent_b: Agent, max_game_iterations: int, verbose:
     return winner
 
 def save_and_log(agent: Agent, metrics: np.array, save_path: str, iteration: int, log: bool = True, overwrite: bool = False, custom_save_path: str = None):
-    if log:
-        mflux_ai.init("YQKDmPhMS9UuYEZ9hgZ8Fw")
-
-        # Log metrics and save model
-        mlflow.log_param("version", "v2")
-        mlflow.log_param("iteration", iteration)
-        mlflow.log_metric("loss", metrics[0])
-        mlflow.log_metric("value_loss", metrics[1])
-        mlflow.log_metric("policy_loss", metrics[2])
-        mlflow.log_metric("value_accuracy", metrics[3])
-        mlflow.log_metric("policy_accuracy", metrics[4])
-
-        mlflow.keras.log_model(agent.get_model(), "model")
-
+    # Save model
     path = f"{save_path}/{MODEL_DIR}" if custom_save_path is None else custom_save_path
 
-    agent.save(path, overwrite=overwrite)
+    agent.save(path, overwrite=overwrite) 
 
+    if log:
+        try:
+            mflux_ai.init("YQKDmPhMS9UuYEZ9hgZ8Fw")
+
+            # Log metrics and save model
+            mlflow.log_param("version", "v2")
+            mlflow.log_param("iteration", iteration)
+            mlflow.log_metric("loss", metrics[0])
+            mlflow.log_metric("value_loss", metrics[1])
+            mlflow.log_metric("policy_loss", metrics[2])
+            mlflow.log_metric("value_accuracy", metrics[3])
+            mlflow.log_metric("policy_accuracy", metrics[4])
+
+            mlflow.keras.log_model(agent.get_model(), "model")
+        except Exception as e:
+            print(f"MFlux Error: {e}")
+
+def play_game_multi(model_path: str, player: int, q: Queue, max_game_iterations: int):
+    a = Agent(player).load(model_path)
+    
+    winner = play_game(a, None, max_game_iterations=max_game_iterations, verbose=True)
+
+    training_data = a.mcts.buffer.data
+    z = 1 if winner == a.player else -1
+    for i, data in enumerate(training_data):
+        # Adding the winner to the training data
+        training_data[i] = (data[0], data[1], z if i&1 == 0 else -z)
+    training_data = np.array(training_data)
+
+    q.put(training_data)
+
+    return training_data
+
+
+def self_play_multi(agent: Agent, iterations: int, num_of_processes: int, save_path: str, training_data_save_path: str, max_game_iterations: int = 100, save_model: bool = True, verbose: bool = False):
+    if verbose:
+        print(f"Agent starting to train on {iterations*num_of_processes} games against itself!")
+
+    metrics = None
+    model_path = f"{save_path}/temp"
+
+    for j in range(iterations):
+        
+        q = Queue()
+        processes = []
+
+        # Save model to file so it can be shared with the other processes
+        agent.save(model_path)
+
+        # Create processes to run the game
+        for _ in range(num_of_processes):
+            p = Process(target=play_game_multi, args=(model_path, agent.player, q, max_game_iterations,))
+            p.start()
+            processes.append(p)
+
+        # Wait for the processes to finish
+        for p in processes:
+            p.join()
+
+        # Get all the training data
+        training_data = []
+        while not q.empty():
+            training_data.append(q.get())
+        training_data = np.array(training_data)[0]
+
+        print("[SELF_PLAY] Training Data Shape: ", training_data.shape)
+
+        # Save the training data
+        np.save(f"{training_data_save_path}/{TRAINING_DATA_DIR}/{TRAINING_DATA_FILE_NAME}_{int(time.time())}.npy", training_data)
+
+        # Train on the training data
+        for i, data in enumerate(training_data):
+            state, probabilities, z = data[0], data[1], data[2]
+            current_player = agent.player if i&1 == 0 else agent.env.get_next_player(agent.player)
+            state2, prob2 = rotate_training_data(state, probabilities, k=1)
+            state3, prob3 = rotate_training_data(state, probabilities, k=2)
+            state4, prob4 = rotate_training_data(state, probabilities, k=3)
+            metrics = agent.train_action(state, z, probabilities, player=current_player)
+            metrics = agent.train_action(state2, z, prob2, player=current_player)
+            metrics = agent.train_action(state3, z, prob3, player=current_player)
+            metrics = agent.train_action(state4, z, prob4, player=current_player)
+
+        # Log and save model
+        if save_model:
+            save_and_log(agent, metrics, save_path, i, log=False, overwrite=True)
+        
+        if verbose:
+            print(f"Finished training on and saving {(j+1)*num_of_processes}/{iterations*num_of_processes} games")
+
+    return metrics
 
 def self_play(agent: Agent, games_to_play: int, save_path: str, training_data_save_path: str, max_game_iterations: int = 100, model_save_rate: int = -1, verbose: bool = False):
 
@@ -117,7 +196,7 @@ def self_play(agent: Agent, games_to_play: int, save_path: str, training_data_sa
 
         # Log and save model
         if (model_save_rate > 0 and (i == 0 or model_save_rate%i == 0)) or model_save_rate == 0:
-            save_and_log(agent, metrics, save_path, i, log=True, overwrite=True)
+            save_and_log(agent, metrics, save_path, i, log=False, overwrite=True)
 
         if verbose:
             print(f"Finished training and saving game {i+1}/{games_to_play}")
@@ -157,6 +236,7 @@ def retrain(agent: Agent, training_batch: int, training_loops: int, training_dat
             training_data = np.load(f"{training_data_save_path}/{TRAINING_DATA_DIR}/{file_name}", allow_pickle=True)
             numb_of_trained_batches += len(training_data)
             
+            print("Shape Training Data: ", training_data.shape)
             # Train on training data
             for data in training_data:
                 state, probabilities = data[0], data[1]
