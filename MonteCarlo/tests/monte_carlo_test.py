@@ -117,11 +117,11 @@ def train_tree_search():
     print(children[0].children) 
 
 
-def transpose_state_tests():
+def test_transpose_state_tests():
     new_state, new_policy = mcts_object.transpose_state(history_states, policy)
 
-    assert new_state == np.array([[[0,2],[0,0]],[[0,2],[0,0]]])
-    assert new_policy == np.array([.9,.0,.1,.9,.10101])
+    assert np.equal(new_state, np.array([[[0,2],[0,0]],[[0,2],[0,0]]]))
+    assert np.equal(new_policy, np.array([.9,.0,.1,.9,.10101]))
 
 
 
