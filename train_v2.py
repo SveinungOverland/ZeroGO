@@ -8,6 +8,8 @@ import random
 import mlflow.keras
 import mflux_ai
 
+from concurrent.futures import ThreadPoolExecutor
+
 TRAINING_DATA_DIR = 'training_data'
 TRAINING_DATA_FILE_NAME = 'training_data'
 MODEL_DIR = 'model'
@@ -85,48 +87,70 @@ def save_and_log(agent: Agent, metrics: np.array, save_path: str, iteration: int
     agent.save(f"{save_path}/{MODEL_DIR}", overwrite=overwrite)
 
 
-def train_and_save(agent: Agent, games_to_play: int, save_path: str, max_game_iterations: int = 100, model_save_rate: int = -1, verbose: bool = False):
-    run_id = int(time.time())
+def self_play(agent: Agent, games_to_play: int, save_path: str, training_data_save_path: str, concurrency: int = 5, max_game_iterations: int = 100, save_model: bool = True, verbose: bool = False):
 
     if verbose:
-        print(f"Agent starting to train {games_to_play} games against itself")
+        print(f"Agent starting to train {games_to_play*concurrency} games against itself")
 
     metrics = None
-    for i in range(games_to_play):
+
+    def execute_game():
+        # Initialize agent
+        agent_copy = Agent.copy(agent)
+        agent_copy.mcts.buffer.clear()
+
         # Play game
-        agent.mcts.buffer.clear()
-        winner = play_game(agent, None, max_game_iterations=max_game_iterations, verbose=verbose)
+        print("Playing game")
+        winner = play_game(agent_copy, None, max_game_iterations=max_game_iterations, verbose=verbose)
+        print("Finished game")
 
-        # Train on result
-        metrics = agent.train(winner == agent.player, verbose=verbose)
-
-        # Save the training data
-        if verbose:
-            print("Starting to save training data")
-        
-        training_data = agent.mcts.buffer.data.copy()
-        z = 1 if winner == agent.player else -1
-        for j, data in enumerate(training_data):
+        # Store training data
+        training_data = agent_copy.mcts.buffer.data
+        z = 1 if winner == agent_copy.player else -1
+        for i, data in enumerate(training_data):
             # Adding the winner to the training data
-            training_data[j] = (data[0], data[1], z if i&1 == 0 else -z)
-        training_data = np.array(training_data)
-        np.save(f"{save_path}/{TRAINING_DATA_DIR}/{TRAINING_DATA_FILE_NAME}_{i}.npy", training_data)
+            training_data[i] = (data[0], data[1], z if i&1 == 0 else -z)
+
+        print("Done! :D")
+        return training_data
+
+    for i in range(games_to_play):
+        training_data_pool = [] # :D xD XD
+
+        # Play games concurrently
+        with ThreadPoolExecutor(max_workers=concurrency) as executor:
+            # Exec games
+            futures = [executor.submit(execute_game) for _ in range(concurrency)]
+            
+            # Store training data
+            for future in futures:
+                training_data = future.result()
+                training_data_pool.append(training_data)
+
+        # Save the data to files
+        training_data_pool = np.array(training_data_pool)
+        np.save(f"{training_data_save_path}/{TRAINING_DATA_DIR}/{TRAINING_DATA_FILE_NAME}_{int(time.time())}.npy", training_data_pool)
+
+        # Train on the training data
+        for training_data in training_data_pool:
+            metrics = agent.train_action(training_data[0], training_data[1], training_data[2])
 
         # Log and save model
-        if (model_save_rate >= 0 and (i == 0 or model_save_rate%i == 0)) or model_save_rate == 0:
+        if save_model:
             save_and_log(agent, metrics, save_path, i, log=True, overwrite=True)
 
         if verbose:
-            print(f"Finished training and saving game {i+1}/{games_to_play}")
-
+            print(f"Finished training and saving game {i*concurrency+1}/{games_to_play*concurrency}")
+        
     return metrics
 
-def retrain(agent: Agent, training_batch: int, training_loops: int, save_path: str, verbose: bool = False):
+def retrain(agent: Agent, training_batch: int, training_loops: int, training_data_save_path: str, verbose: bool = False):
 
-    training_dir = f"{save_path}/{TRAINING_DATA_DIR}"
+    training_dir = f"{training_data_save_path}/{TRAINING_DATA_DIR}"
 
     # Get the amount of training files
-    training_files_count = len([name for name in os.listdir(training_dir) if os.path.isfile(os.path.join(training_dir, name))])
+    training_files = [name for name in os.listdir(training_dir) if os.path.isfile(os.path.join(training_dir, name))]
+    training_files_count = len(training_files)
     file_indicies = np.linspace(0, training_files_count - 1, training_files_count, dtype=int)
     start = time.time()
     metrics = None
@@ -149,7 +173,8 @@ def retrain(agent: Agent, training_batch: int, training_loops: int, save_path: s
                 break
             
             # Extract training data
-            training_data = np.load(f"{save_path}/{TRAINING_DATA_DIR}/{TRAINING_DATA_FILE_NAME}_{i}.npy", allow_pickle=True)
+            file_name = training_files[i]
+            training_data = np.load(f"{training_data_save_path}/{TRAINING_DATA_DIR}/{file_name}", allow_pickle=True)
             numb_of_trained_batches += len(training_data)
             
             # Train on training data
@@ -190,7 +215,7 @@ def evaluate(agent_best: Agent, agent_latest: Agent, games_to_play: int, save_pa
     latest_player_win_percentage = latest_agent_wins/games_to_play
 
     if verbose:
-        print(f"Latest player won {latest_agent_wins}/{games_to_play} - {latest_player_win_percentage}%")
+        print(f"Latest player won {latest_agent_wins}/{games_to_play} - {latest_player_win_percentage*100}%")
 
     if latest_player_win_percentage >= 0.55:
         return agent_latest

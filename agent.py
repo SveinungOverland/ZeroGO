@@ -2,15 +2,25 @@ from MonteCarlo.mcts import MCTS
 from MonteCarlo.buffer import Buffer
 from Go.environment import Environment
 from nn import NNClient
+from NN.dcnn_v2 import Mode
 import numpy as np
 
+c = 1.0
+dimension = 5
+channel_size = 7
+residual_layers = 10
+filters = 100
+steps = 50
 
 class Agent():
     def __init__(self, player: int):
-        self.nn_wrapper: NNClient = NNClient(c=1.0, dimension=5, channel_size=7, residual_layers=10, filters=100)
-        self.env: Environment = Environment(dimension=5, max_state_size=3)
-        self.mcts: MCTS = MCTS(environment=self.env, neural_network=self.nn_wrapper, player_id=player, steps=50)
+        self.nn_wrapper: NNClient = NNClient(c=c, dimension=dimension, channel_size=channel_size, residual_layers=residual_layers, filters=filters)
+        self.env: Environment = Environment(dimension=dimension, max_state_size=channel_size//2)
+        self.mcts: MCTS = MCTS(environment=self.env, neural_network=self.nn_wrapper, player_id=player, steps=steps)
         self.player: int = player
+
+        # Compile model
+        self.nn_wrapper.model.compile_predict(Mode.Model)
 
     def initialize(self, state):
         self.mcts.initialize_root(state)
@@ -51,3 +61,11 @@ class Agent():
 
     def get_model(self):
         return self.nn_wrapper.get_model()
+
+    @classmethod
+    def copy(cls, agent: 'Agent') -> 'Agent':
+        c = cls.__new__(cls)
+        c.env = agent.env
+        c.nn_wrapper = agent.nn_wrapper
+        c.mcts = MCTS(environment=agent.env, neural_network=agent.nn_wrapper, player_id=agent.player, steps=steps)
+        return c

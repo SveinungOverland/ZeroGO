@@ -183,20 +183,6 @@ class MCTS:
     def __append_state(self, state, board):
         return np.append(state, board.reshape(1, self.environment.get_dimension(), self.environment.get_dimension()), axis=0)
 
-
-    def transpose_state(self, states : np.array, policy: np.array) -> tuple:
-        temp = []
-        for state in states:
-            temp.append(np.rot90(state))
-        length_of_side = int(sqrt(policy.size-1))
-
-        rotated_policy = np.append(np.rot90(policy[:-1].reshape(length_of_side,length_of_side)).reshape(policy.size - 1), policy[-1])
-        # ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all() (because of python is python)
-        new_state = np.vstack(temp).reshape((states.shape))
-        print(new_state)
-        return (new_state, rotated_policy)
-
-
     #visulize the node tree 
     def visualize_tree(self):
         graph = pydot.Dot(graph_type='graph')
