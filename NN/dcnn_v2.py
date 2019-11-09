@@ -171,6 +171,9 @@ class Model:
   def load(self, file_name):
     self.__retrieve_net(Mode.Model).load_weights(file_name + "/model")
     return self
+
+  def compile_predict(self, mode):
+    self.__retrieve_net(mode)._make_predict_function()
   
   @classmethod
   def create(cls, shape=(5,5,7), nr_residual_layers=10, kernel_size=(3,3), filters=256, data_format=DataFormats.ChannelsLast):
