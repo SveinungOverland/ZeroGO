@@ -51,7 +51,12 @@ class MCTS:
 
 
     def rollout(self, node: Node):
-        win = self.environment.rollout(state=node.state, start_player=node.player) == self.player_id
+        win1 = self.environment.rollout(state=node.state, start_player=node.player) == self.player_id
+        win2 = self.environment.rollout(state=node.state, start_player=node.player) == self.player_id
+        win3 = self.environment.rollout(state=node.state, start_player=node.player, only_pass=True) == self.player_id
+
+        win = sum([win1, win2, win3]) >= 2
+
         self.back_propagation(node, win)
     
     def back_propagation(self, node: Node, win: bool):

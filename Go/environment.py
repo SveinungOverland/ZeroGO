@@ -1,4 +1,4 @@
-from Go.go import (execute_move, opponent, all_possible_moves, calculate_score, BLACK, WHITE, TIE, VALID_MOVE)
+from Go.go import (execute_move, opponent, all_possible_moves, calculate_score, BLACK, WHITE, TIE, VALID_MOVE, PASS_MOVE)
 import numpy as np
 import random
 
@@ -75,23 +75,27 @@ class Environment:
     def empty_board(self):
         return np.zeros(shape=(self.dimension, self.dimension), dtype=int)
 
-    def rollout(self, state: np.array, start_player:int):
+    def rollout(self, state: np.array, start_player:int, only_pass: bool = False):
         done = False
         history = state.copy()
         
         iterations = 0
         current_player = start_player
         while not done and iterations < self.max_rollout_iterations:
-            # Get all valid movies
-            moves = self.get_action_space(history, player=current_player)
-            if len(moves) == 0:
-                done = True
-                continue
-            
-            # Select a random move
-            rand_index = random.randint(0, len(moves) - 1)
-            move = moves[rand_index]
-            move_x, move_y = move[0]
+            move = None
+            if only_pass and iterations&1 == 0:
+                move = PASS_MOVE
+            else:
+                # Get all valid movies
+                moves = self.get_action_space(history, player=current_player)
+                if len(moves) == 0:
+                    done = True
+                    continue
+                
+                # Select a random move
+                rand_index = random.randint(0, len(moves) - 1)
+                move = moves[rand_index][0]
+            move_x, move_y = move
 
             # Execute move
             history, done = self.simulate(state=history, action=(move_x, move_y), player=current_player)
