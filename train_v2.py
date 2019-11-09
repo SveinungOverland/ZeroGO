@@ -69,7 +69,7 @@ def play_game(agent_a: Agent, agent_b: Agent, max_game_iterations: int, verbose:
 
     return winner
 
-def save_and_log(agent: Agent, metrics: np.array, save_path: str, iteration: int, log: bool = True, overwrite: bool = False):
+def save_and_log(agent: Agent, metrics: np.array, save_path: str, iteration: int, log: bool = True, overwrite: bool = False, custom_save_path: str = None):
     if log:
         mflux_ai.init("YQKDmPhMS9UuYEZ9hgZ8Fw")
 
@@ -84,7 +84,9 @@ def save_and_log(agent: Agent, metrics: np.array, save_path: str, iteration: int
 
         mlflow.keras.log_model(agent.get_model(), "model")
 
-    agent.save(f"{save_path}/{MODEL_DIR}", overwrite=overwrite)
+    path = f"{save_path}/{MODEL_DIR}" if custom_save_path is None else custom_save_path
+
+    agent.save(path, overwrite=overwrite)
 
 
 def self_play(agent: Agent, games_to_play: int, save_path: str, training_data_save_path: str, max_game_iterations: int = 100, model_save_rate: int = -1, verbose: bool = False):
@@ -175,7 +177,7 @@ def retrain(agent: Agent, training_batch: int, training_loops: int, training_dat
 
     return metrics
 
-def evaluate(agent_best: Agent, agent_latest: Agent, games_to_play: int, save_path: str, verbose: bool = False, verbose_play: bool = False) -> Agent:
+def evaluate(agent_best: Agent, agent_latest: Agent, games_to_play: int, save_path: str, max_game_iterations: int = 60, verbose: bool = False, verbose_play: bool = False) -> Agent:
 
     best_agent_wins = 0
     latest_agent_wins = 0
@@ -185,7 +187,7 @@ def evaluate(agent_best: Agent, agent_latest: Agent, games_to_play: int, save_pa
             print(f"Starting to play match {i}")
 
         # Play game between the agents
-        winner = play_game(agent_best, agent_latest, max_game_iterations=60, verbose=verbose_play)
+        winner = play_game(agent_best, agent_latest, max_game_iterations=max_game_iterations, verbose=verbose_play)
 
         # Evaluate the winner
         if winner == agent_best.player:

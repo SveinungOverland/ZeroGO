@@ -69,6 +69,10 @@ class Agent():
     def get_model(self):
         return self.nn_wrapper.get_model()
 
+    def load(self, model_path: str):
+        self.nn_wrapper.load_model(file_path=model_path)
+        return self
+
     @classmethod
     def copy(cls, agent: 'Agent') -> 'Agent':
         c = cls.__new__(cls)

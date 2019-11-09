@@ -44,6 +44,9 @@ class NNClient:
     def get_model(self):
         return self.model.model
 
+    def load_model(self, file_path: str):
+        self.model.load(file_path)
+
     def __state_to_nn_input(self, states: np.array, player: int, channel_size: int) -> np.array:
         # This be correct padding?
         padding = channel_size - len(states) * 2 - 1    # Calc number of empty arrays needed for padding

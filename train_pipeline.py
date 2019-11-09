@@ -12,15 +12,19 @@ VERSION = 1
 
 training_end_time = datetime.strptime(TRAIN_STOP_TIME, '%d/%m/%y %H:%M:%S').timestamp()
 current_training_iteration = 0
-best_agent = Agent(BLACK)
+
+base_path = f"models/v{VERSION}"
+best_agent_path = f"{base_path}/best"
+
+best_agent = Agent(BLACK).load(model_path=best_agent_path)
+
 while training_end_time > time.time():
     run_id = int(time.time())
-    base_path = f"models/v{VERSION}"
     save_path = f"{base_path}/{run_id}"
     training_data_path = f"{base_path}/{TRAINING_DATA_DIR}"
 
     # Make necessary directories
-    necessary_dirs = [training_data_path, f"{save_path}/{MODEL_DIR}"]
+    necessary_dirs = [training_data_path, f"{save_path}/{MODEL_DIR}", best_agent_path]
     for directory in necessary_dirs:
         if not os.path.exists(directory):
             os.makedirs(directory)
@@ -29,7 +33,7 @@ while training_end_time > time.time():
 
     # SELF PLAY
     print("\n\n-------- SELF PLAY ----------")
-    best_metrics = self_play(best_agent, games_to_play=50, save_path=save_path, training_data_save_path=base_path, model_save_rate=0, max_game_iterations=60, verbose=True)
+    best_metrics = self_play(best_agent, games_to_play=1, save_path=save_path, training_data_save_path=base_path, model_save_rate=0, max_game_iterations=2, verbose=True)
 
     # Log and save model
     save_and_log(best_agent, None, save_path=save_path, iteration=current_training_iteration, log=False, overwrite=True)
@@ -45,7 +49,7 @@ while training_end_time > time.time():
 
     # Evaluate and pick best agent
     print("\n\n-------- EVALUATE ----------")
-    new_best_agent = evaluate(best_agent, latest_agent, games_to_play=5, save_path=save_path, verbose=True, verbose_play=True)
+    new_best_agent = evaluate(best_agent, latest_agent, games_to_play=1, save_path=save_path, max_game_iterations=60, verbose=True, verbose_play=True)
     
     metrics = None
     if new_best_agent == best_agent:
@@ -55,7 +59,8 @@ while training_end_time > time.time():
     best_agent = new_best_agent
 
     # Save and log the best agent
-    save_and_log(best_agent, metrics=metrics, save_path=save_path, iteration=current_training_iteration, log=True, overwrite=True)
+    save_and_log(best_agent, metrics=metrics, save_path=save_path, iteration=current_training_iteration, log=True, overwrite=True, custom_save_path=best_agent_path)
+    save_and_log(best_agent, metrics=metrics, save_path=save_path, iteration=current_training_iteration, log=False, overwrite=True)
 
     current_training_iteration += 1
 
