@@ -25,14 +25,18 @@ while training_end_time > time.time():
         if not os.path.exists(directory):
             os.makedirs(directory)
 
+    start_time = time.time()
+
     # SELF PLAY
-    best_metrics = self_play(best_agent, games_to_play=1, concurrency=5, save_path=save_path, training_data_save_path=base_path, max_game_iterations=10, save_model=True, verbose=True)
+    print("\n\n-------- SELF PLAY ----------")
+    best_metrics = self_play(best_agent, games_to_play=50, save_path=save_path, training_data_save_path=base_path, model_save_rate=0, max_game_iterations=60, verbose=True)
 
     # Log and save model
     save_and_log(best_agent, None, save_path=save_path, iteration=current_training_iteration, log=False, overwrite=True)
 
     # RETRAIN NETWORK
     # Creating a new agent that trains on the previous X amount of positions Y times
+    print("\n\n-------- RETRAIN NETWORK ----------")
     latest_agent = Agent(WHITE)
     latest_metrics = retrain(latest_agent, training_batch=50, training_loops=1, training_data_save_path=base_path, verbose=True)
 
@@ -40,7 +44,8 @@ while training_end_time > time.time():
     # Evaluating and choosing between the latest_agent and the best_agent
 
     # Evaluate and pick best agent
-    new_best_agent = evaluate(best_agent, latest_agent, games_to_play=3, save_path=save_path, verbose=True, verbose_play=True)
+    print("\n\n-------- EVALUATE ----------")
+    new_best_agent = evaluate(best_agent, latest_agent, games_to_play=5, save_path=save_path, verbose=True, verbose_play=True)
     
     metrics = None
     if new_best_agent == best_agent:
@@ -53,4 +58,8 @@ while training_end_time > time.time():
     save_and_log(best_agent, metrics=metrics, save_path=save_path, iteration=current_training_iteration, log=True, overwrite=True)
 
     current_training_iteration += 1
+
+    end_time = time.time()
+
+    print(f"Iteration {current_training_iteration} completed! Time used: {end_time - start_time}")
 

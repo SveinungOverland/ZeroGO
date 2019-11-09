@@ -4,11 +4,12 @@ from Go.environment import Environment
 from nn import NNClient
 from NN.dcnn_v2 import Mode
 import numpy as np
+from Utils.rotation import rotate_training_data
 
 c = 1.0
 dimension = 5
 channel_size = 7
-residual_layers = 10
+residual_layers = 30
 filters = 100
 steps = 50
 
@@ -40,7 +41,13 @@ class Agent():
         # Train on own buffer
         z = 1 if won else -1
         for (state, probabilities) in self.mcts.buffer.data:
+            state2, prob2 = rotate_training_data(state, probabilities, k=1)
+            state3, prob3 = rotate_training_data(state, probabilities, k=2)
+            state4, prob4 = rotate_training_data(state, probabilities, k=3)
             metrics = self.nn_wrapper.train(state, self.player, z, np.array(probabilities))
+            metrics = self.nn_wrapper.train(state2, self.player, z, np.array(prob2))
+            metrics = self.nn_wrapper.train(state3, self.player, z, np.array(prob3))
+            metrics = self.nn_wrapper.train(state4, self.player, z, np.array(prob4))
             current_iteration_count += 1
             if verbose:
                 print(f"Training iteration: {current_iteration_count}/{training_iteration_count}")
@@ -53,8 +60,8 @@ class Agent():
 
         return metrics
 
-    def train_action(self, state: np.array, z: int, probabilities: np.array):
-        return self.nn_wrapper.train(state, self.player, z, np.array(probabilities))
+    def train_action(self, state: np.array, z: int, probabilities: np.array, player: int):
+        return self.nn_wrapper.train(state, player, z, np.array(probabilities))
 
     def save(self, path, overwrite: bool = False):
         self.nn_wrapper.model.save(path, overwrite=overwrite)
@@ -67,5 +74,6 @@ class Agent():
         c = cls.__new__(cls)
         c.env = agent.env
         c.nn_wrapper = agent.nn_wrapper
+        c.player = agent.player
         c.mcts = MCTS(environment=agent.env, neural_network=agent.nn_wrapper, player_id=agent.player, steps=steps)
         return c
