@@ -184,6 +184,17 @@ class MCTS:
         return np.append(state, board.reshape(1, self.environment.get_dimension(), self.environment.get_dimension()), axis=0)
 
 
+    def transpose_state(self, states : np.array, policy: np.array) -> tuple:
+        temp = []
+        for state in states:
+            temp.append(state.transpose())
+
+        length_of_side = sqrt(policy.size()-1)
+
+        new_policy = np.append(policy[:-1].reshape(length_of_side,length_of_side).transpose().reshape(policy.size()), policy[-1])
+        
+        return (np.vstack(temp), new_policy)
+
 
     #visulize the node tree 
     def visualize_tree(self):

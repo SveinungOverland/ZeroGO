@@ -2,6 +2,10 @@ from ..mcts import MCTS
 from ..node import Node
 import numpy as np
 
+
+history_states = np.array([[[0,0],[2,0]],[[0,0],[2,0]]])
+policy = np.array([0.9,.1,.0,.8,.10101])
+
 class Mock_environment():
     def __init__(self):
         self.__player = 1
@@ -49,6 +53,10 @@ mock_environment = Mock_environment()
 mock_NN = Mock_NN()
 
 mcts_object = MCTS(environment= mock_environment , neural_network= mock_NN, player_id= 1,steps = 1)
+
+
+
+
 
 #testing the backpropagation of the mcts
 def test_back_propagation():
@@ -109,15 +117,16 @@ def train_tree_search():
     print(children[0].children) 
 
 
+def transpose_state_tests():
+    new_state, new_policy = mcts_object.transpose_state(history_states, policy)
+
+    assert new_state == np.array([[[0,2],[0,0]],[[0,2],[0,0]]])
+    assert new_policy == np.array([.9,.0,.1,.9,.10101])
 
 
-"""
-def test_choose_node():
-    #create parent_node with children
-    parent_node =  Node((1,1), np.zeros(shape = (1,9)), None)
-    children = [Node((1,1), np.zeros(shape = (1,9)), parent_node), Node((1,1), np.zeros(shape = (1,9)), parent_node), Node((1,1), np.zeros(shape = (1,9)), parent_node)]
-    children[0].visits = 10
-    children[0].wins = 9
-    parent_node.children = children
-    assert children[0] == mcts_object.choose_node(parent_node)
-""";
+
+
+
+
+
+
