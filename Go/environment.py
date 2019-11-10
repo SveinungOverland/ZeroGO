@@ -78,12 +78,12 @@ class Environment:
     def rollout(self, state: np.array, player: int, start_player: int):
         # Playing five random games with different aspect
         win1 = self.play_random(state=state, start_player=start_player)
-        #win2 = self.play_random(state=state, start_player=start_player)
+        win2 = self.play_random(state=state, start_player=start_player)
         win3 = self.play_random(state=state, start_player=start_player, max_iterations=10)
-        #win4 = self.play_random(state=state, start_player=start_player, max_iterations=10)
+        win4 = self.play_random(state=state, start_player=start_player, max_iterations=10)
         win5 = self.play_random(state=state, start_player=start_player, only_pass=True)
 
-        wins = [win1, win3]
+        wins = [win1, win2, win3, win4]
         if win5 == player:
             wins.append(win5)
         # Filter away ties (3)

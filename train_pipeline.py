@@ -9,7 +9,7 @@ import os
 
 TRAIN_STOP_TIME = '06/12/19 14:00:00'
 VERSION = 1
-VERBOSE = True
+VERBOSE = False
 
 training_end_time = datetime.strptime(TRAIN_STOP_TIME, '%d/%m/%y %H:%M:%S').timestamp()
 
@@ -35,7 +35,7 @@ def exec_pipeline():
 
         # SELF PLAY
         print("\n\n-------- SELF PLAY ----------")
-        best_metrics = self_play_multi(best_agent, iterations=1, num_of_processes=2, save_path=save_path, training_data_save_path=base_path, max_game_iterations=2, save_model=True, verbose=VERBOSE)
+        best_metrics = self_play_multi(best_agent, iterations=1, num_of_processes=100, save_path=save_path, training_data_save_path=base_path, max_game_iterations=50, save_model=True, verbose=VERBOSE)
         # best_metrics = self_play(best_agent, games_to_play=1, save_path=save_path, training_data_save_path=base_path, model_save_rate=0, max_game_iterations=2, verbose=VERBOSE)
 
         # Log and save model
@@ -52,7 +52,7 @@ def exec_pipeline():
 
         # Evaluate and pick best agent
         print("\n\n-------- EVALUATE ----------")
-        new_best_agent = evaluate(best_agent, latest_agent, games_to_play=2, save_path=save_path, max_game_iterations=4, verbose=VERBOSE, verbose_play=VERBOSE)
+        new_best_agent = evaluate(best_agent, latest_agent, games_to_play=7, save_path=save_path, max_game_iterations=50, verbose=VERBOSE, verbose_play=VERBOSE)
         
         metrics = None
         if new_best_agent == best_agent:
