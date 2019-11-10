@@ -45,7 +45,7 @@ def exec_pipeline():
         # Creating a new agent that trains on the previous X amount of positions Y times
         print("\n\n-------- RETRAIN NETWORK ----------")
         latest_agent = Agent(WHITE)
-        latest_metrics = retrain(latest_agent, training_batch=4, training_loops=1, training_data_save_path=base_path, verbose=VERBOSE)
+        latest_metrics = retrain(latest_agent, training_batch=100, training_loops=5, training_data_save_path=base_path, verbose=VERBOSE)
 
         # EVALUATE NETWORK
         # Evaluating and choosing between the latest_agent and the best_agent
