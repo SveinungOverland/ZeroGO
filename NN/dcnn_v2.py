@@ -150,7 +150,7 @@ class Model:
     # assuming net is a model already
     net.compile(
       optimizer=SGD(learning_rate=learning_rate, momentum=momentum),
-      loss=['mean_squared_error', tf.nn.softmax_cross_entropy_with_logits],
+      loss=['mean_squared_error', tf.nn.softmax_cross_entropy_with_logits_v2],
       metrics=['accuracy'],
     )
     net.fit(x, [y_value, y_policy], epochs=epochs)
