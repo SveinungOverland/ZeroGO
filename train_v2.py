@@ -3,10 +3,11 @@ from Go.go import BLACK, WHITE, PASS_MOVE
 import numpy as np
 import time
 import os
+import sys
 import random
 from Utils.rotation import rotate_training_data
 
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Pool
 
 import mlflow.keras
 import mflux_ai
@@ -94,7 +95,8 @@ def save_and_log(agent: Agent, metrics: np.array, save_path: str, iteration: int
         except Exception as e:
             print(f"MFlux Error: {e}")
 
-def play_game_multi(model_path: str, player: int, q: Queue, max_game_iterations: int):
+def play_game_multi(model_path: str, player: int, max_game_iterations: int):
+    print("Starting process")
     a = Agent(player).load(model_path)
     
     winner = play_game(a, None, max_game_iterations=max_game_iterations, verbose=True)
@@ -106,8 +108,7 @@ def play_game_multi(model_path: str, player: int, q: Queue, max_game_iterations:
         training_data[i] = (data[0], data[1], z if i&1 == 0 else -z)
     training_data = np.array(training_data)
 
-    q.put(training_data)
-
+    print("Process finished!")
     return training_data
 
 
@@ -126,34 +127,40 @@ def self_play_multi(agent: Agent, iterations: int, num_of_processes: int, save_p
         # Save model to file so it can be shared with the other processes
         agent.save(model_path)
 
-        # Create processes to run the game
-        for _ in range(num_of_processes):
-            p = Process(target=play_game_multi, args=(model_path, agent.player, q, max_game_iterations,))
-            p.start()
-            processes.append(p)
+        temp_training_data = None
+        with Pool(processes=num_of_processes) as pool:
+            temp_training_data = pool.starmap(play_game_multi, [(model_path, agent.player, max_game_iterations) for _ in range(num_of_processes)])
 
-        # Wait for the processes to finish
-        for p in processes:
-            p.join()
-
-        # Get all the training data
         training_data = []
-        while not q.empty():
-            training_data.append(q.get())
-        training_data = np.array(training_data)[0]
+        for data in temp_training_data:
+            for d in data:
+                training_data.append(d)
+        training_data = np.array(training_data)
+        temp_training_data = None
 
-        print("[SELF_PLAY] Training Data Shape: ", training_data.shape)
+        if verbose:
+            print("Starting to save training data")
 
         # Save the training data
         np.save(f"{training_data_save_path}/{TRAINING_DATA_DIR}/{TRAINING_DATA_FILE_NAME}_{int(time.time())}.npy", training_data)
 
+        if verbose:
+            print("Starting to train on data")
+
         # Train on the training data
         for i, data in enumerate(training_data):
+            if verbose:
+                print(f"Rotating training data for move {i}")
+
             state, probabilities, z = data[0], data[1], data[2]
             current_player = agent.player if i&1 == 0 else agent.env.get_next_player(agent.player)
             state2, prob2 = rotate_training_data(state, probabilities, k=1)
             state3, prob3 = rotate_training_data(state, probabilities, k=2)
             state4, prob4 = rotate_training_data(state, probabilities, k=3)
+
+            if verbose:
+                print(f"Training on move {i}")
+
             metrics = agent.train_action(state, z, probabilities, player=current_player)
             metrics = agent.train_action(state2, z, prob2, player=current_player)
             metrics = agent.train_action(state3, z, prob3, player=current_player)
