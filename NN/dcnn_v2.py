@@ -145,14 +145,17 @@ class Model:
       raise Exception("No acceptible mode given!")
     return net
   
-  def train(self, x, y_value, y_policy, learning_rate=0.01, momentum=0.9, epochs=5):
+  def compile_net(self):
     net = self.__retrieve_net(Mode.Model)
-    # assuming net is a model already
     net.compile(
       optimizer=SGD(learning_rate=learning_rate, momentum=momentum),
       loss=['mean_squared_error', tf.nn.softmax_cross_entropy_with_logits_v2],
       metrics=['accuracy'],
     )
+
+  def train(self, x, y_value, y_policy, learning_rate=0.01, momentum=0.9, epochs=5):
+    net = self.__retrieve_net(Mode.Model)
+    # assuming net is a model already
     net.fit(x, [y_value, y_policy], epochs=epochs)
     
     return net.evaluate(x, [y_value, y_policy], verbose=0)
