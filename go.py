@@ -2,7 +2,7 @@
 import pygame
 pygame.font.init()
 from Go.game import Game
-from Go.go import calculate_score
+from Go.go import calculate_score, VALID_MOVE
 from agent import Agent
 import sys
 import numpy as np
@@ -103,6 +103,8 @@ class BoardView:
 
     def place_piece(self, row, column):
         status = self.go.make_move(row, column)
+        if status != VALID_MOVE: return
+
         self.board = self.go.get_board()
 
         self.is_black = self.go.get_current_turn() == 1
@@ -234,8 +236,8 @@ def execute_move():
     change_black_score(new_black_score)
     change_white_score(new_white_score)
 
-    value_b, policy_b = agent_black.predict(state=board.go.get_game_state(), player=1)
-    value_w, policy_w = agent_black.predict(state=board.go.get_game_state(), player=2)
+    value_b, _ = agent_black.predict(state=board.go.get_game_state(), player=1)
+    value_w, _ = agent_black.predict(state=board.go.get_game_state(), player=2)
     value_b = value_b[0][0]
     value_w = value_w[0][0]
 
