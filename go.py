@@ -111,7 +111,7 @@ button = Button(x=100, y=100, width=100, height=40, color=(128, 128, 128), scree
 
 board_width = 500
 board_height = 500
-dimension = 5
+dimension = 7
 line_gap = board_width / dimension
 board_x = 50 + line_gap / 2
 board_y = 50 + line_gap / 2
