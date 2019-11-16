@@ -163,9 +163,13 @@ def execute_move():
 
 parser = argparse.ArgumentParser(description="Go game")
 parser.add_argument("-mode", "--mode", type=str, help="Define players, (e.g 1v1, 1va, ava)", default="1va")
+parser.add_argument("-path", "--path", type=str, help="Path for weights?", default="models/v1/best")
 
 args = parser.parse_args()
 mode = args.mode
+agent_black.load(args.path)
+agent_white.load(args.path)
+print("Path: {}".format(args.path))
 
 if mode == "1v1":
     turns = {
