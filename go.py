@@ -2,6 +2,7 @@
 import pygame
 pygame.font.init()
 from Go.game import Game
+from Go.go import calculate_score
 from agent import Agent
 import sys
 import numpy as np
@@ -50,6 +51,9 @@ class BoardView:
         self.screen = screen
         self.last_move = None
 
+        self.last_move_black = None
+        self.last_move_white = None
+
         self.render_shadow = True
 
     def show(self):
@@ -86,9 +90,19 @@ class BoardView:
                                        (x_pos, y_pos), self.radius)
         
         # Render last move ring
-        if self.last_move:
-            x = int(self.x + self.last_move[1] * self.line_gap)
-            y = int(self.y + self.last_move[0] * self.line_gap)
+        # if self.last_move:
+        #     x = int(self.x + self.last_move[1] * self.line_gap)
+        #     y = int(self.y + self.last_move[0] * self.line_gap)
+        #     pygame.draw.circle(self.screen, (255, 0, 0), (x, y), int(self.radius / 1.2), 1)
+        
+        if self.last_move_black:
+            x = int(self.x + self.last_move_black[1] * self.line_gap)
+            y = int(self.y + self.last_move_black[0] * self.line_gap)
+            pygame.draw.circle(self.screen, (255, 0, 0), (x, y), int(self.radius / 1.2), 1)
+        
+        if self.last_move_white:
+            x = int(self.x + self.last_move_white[1] * self.line_gap)
+            y = int(self.y + self.last_move_white[0] * self.line_gap)
             pygame.draw.circle(self.screen, (255, 0, 0), (x, y), int(self.radius / 1.2), 1)
         
         self.button.show()
@@ -132,6 +146,21 @@ player1_turn = True
 agent_black = Agent(1, dimension=dimension, steps=75)
 agent_white = Agent(2, dimension=dimension, steps=75)
 
+global last_move_p1
+global last_move_p2
+last_move_p1 = None
+last_move_p2 = None
+
+def change_last_move_p1(val):
+    global last_move_p1
+    last_move_p1 = val
+    board.last_move_black = val
+
+def change_last_move_p2(val):
+    global last_move_p2
+    last_move_p2 = val
+    board.last_move_white = val
+
 def change_can_click_on_board(value):
     global can_click_on_board
     can_click_on_board = value
@@ -144,14 +173,14 @@ def player_move():
     change_can_click_on_board(True)
 
 def agent_move():
-    print("Current game state: {}".format(board.go.get_game_state()))
-    print("Current game state: {}".format(board.go.get_game_state().shape))
     if player1_turn:
         x, y = agent_black.pick_action(state=board.go.get_game_state())
         print(f"Move: {x}, {y}")
+        change_last_move_p1((x, y))
     else:
         x, y = agent_white.pick_action(state=board.go.get_game_state())
         print(f"Move: {x}, {y}")
+        change_last_move_p2((x, y))
 
     board.go.make_move(x, y)
     board.board = board.go.get_board()
@@ -167,11 +196,13 @@ def random_move():
         board.place_piece(x, y)
         change_player_turn(not player1_turn)
         execute_move()
+        change_last_move_p1((x, y))
     else:
         x, y = random.choice(agent_black.env.get_action_space(state=board.go.get_game_state(), player=2))[0]
         board.place_piece(x, y)
         change_player_turn(not player1_turn)
         execute_move()
+        change_last_move_p2((x, y))
 
 def execute_move():
     if player1_turn:
@@ -180,6 +211,12 @@ def execute_move():
         thread = Thread(target=turns["player_2"], args=())
     
     thread.start()
+
+
+def render_text(text, x, y, font_size=30, font="Arial"):
+    font = pygame.font.SysFont(font, font_size)
+    surface = font.render(text, False, (0, 0, 0))
+    screen.blit(surface, (x, y))
 
 mode = args.mode
 agent_black.load(args.path)
@@ -247,6 +284,11 @@ while running:
                 column = int(column)
                 if row >= 0 and row < dimension and column >= 0 and column < dimension:
                     board.place_piece(row, column)
+                    
+                    if player1_turn:
+                        change_last_move_p1((row, column))
+                    else:
+                        change_last_move_p2((row, column))
             
             change_can_click_on_board(False)
             change_player_turn(not player1_turn)
@@ -256,6 +298,8 @@ while running:
 
     screen.fill((0, 0, 0))
     board.show()
+    render_text(text="Player 1 last move: {}".format(last_move_p1), x=80, y=10, font_size=20)
+    render_text(text="Player 2 last move: {}".format(last_move_p2), x=300, y=10, font_size=20)
 
     # Flip the display
     pygame.display.flip()
