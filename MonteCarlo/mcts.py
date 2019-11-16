@@ -52,7 +52,7 @@ class MCTS:
 
 
     def rollout(self, node: Node):
-        win = self.environment.rollout(state=node.state, start_player=node.player) == self.player_id
+        win = self.environment.rollout(state=node.state, player=self.player_id, start_player=node.player)== self.player_id
         self.back_propagation(node, win)
     
     def back_propagation(self, node: Node, win: bool):
