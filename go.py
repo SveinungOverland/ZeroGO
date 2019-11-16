@@ -89,12 +89,6 @@ class BoardView:
                     pygame.draw.circle(self.screen, (255, 255, 255),
                                        (x_pos, y_pos), self.radius)
         
-        # Render last move ring
-        # if self.last_move:
-        #     x = int(self.x + self.last_move[1] * self.line_gap)
-        #     y = int(self.y + self.last_move[0] * self.line_gap)
-        #     pygame.draw.circle(self.screen, (255, 0, 0), (x, y), int(self.radius / 1.2), 1)
-        
         if self.last_move_black:
             x = int(self.x + self.last_move_black[1] * self.line_gap)
             y = int(self.y + self.last_move_black[0] * self.line_gap)
@@ -136,20 +130,51 @@ parser.add_argument("-path", "--path", type=str, help="Path for weights?", defau
 parser.add_argument("-dimension", "--dimension", type=int, help="Board dimension", default=5)
 args = parser.parse_args()
 
+mode = args.mode
+
+agent_black = Agent(1, dimension=dimension, steps=75)
+agent_white = Agent(2, dimension=dimension, steps=75)
+agent_black.load(args.path)
+agent_white.load(args.path)
 board = BoardView(screen, board_x, board_y, board_width, board_height, dimension=args.dimension)
 
 global can_click_on_board
 can_click_on_board = False
 player1_turn = True
 
-
-agent_black = Agent(1, dimension=dimension, steps=75)
-agent_white = Agent(2, dimension=dimension, steps=75)
-
 global last_move_p1
 global last_move_p2
 last_move_p1 = None
 last_move_p2 = None
+
+global black_score
+global white_score
+black_score = 0
+white_score = 0
+
+global confidence_black
+global confidence_white
+conf_b, _ = agent_black.predict(state=board.go.get_game_state(), player=1)
+conf_w, _ = agent_black.predict(state=board.go.get_game_state(), player=2)
+confidence_black = conf_b[0][0]
+confidence_white = conf_w[0][0]
+
+
+def change_confidence_black(val):
+    global confidence_black
+    confidence_black = val
+
+def change_confidence_white(val):
+    global confidence_white
+    confidence_white = val
+
+def change_black_score(val):
+    global black_score
+    black_score = val
+
+def change_white_score(val):
+    global white_score
+    white_score = val
 
 def change_last_move_p1(val):
     global last_move_p1
@@ -205,6 +230,21 @@ def random_move():
         change_last_move_p2((x, y))
 
 def execute_move():
+    new_black_score, new_white_score, _ = calculate_score(board.go.get_board())
+    change_black_score(new_black_score)
+    change_white_score(new_white_score)
+
+    value_b, policy_b = agent_black.predict(state=board.go.get_game_state(), player=1)
+    value_w, policy_w = agent_black.predict(state=board.go.get_game_state(), player=2)
+    value_b = value_b[0][0]
+    value_w = value_w[0][0]
+
+    print(f"Conf_black: {value_b}")
+    print(f"Conf_white: {value_w}")
+
+    change_confidence_black(value_b)
+    change_confidence_white(value_w)
+
     if player1_turn:
         thread = Thread(target=turns["player_1"], args=())
     else:
@@ -218,10 +258,6 @@ def render_text(text, x, y, font_size=30, font="Arial"):
     surface = font.render(text, False, (0, 0, 0))
     screen.blit(surface, (x, y))
 
-mode = args.mode
-agent_black.load(args.path)
-agent_white.load(args.path)
-print("Path: {}".format(args.path))
 
 player1_mode, player2_mode = mode.split("v")
 if player1_mode == "p"or player1_mode == "1":
@@ -253,6 +289,7 @@ turns = {
 # Run until the user asks to quit
 running = True
 execute_move()
+text_size = 20
 while running:
     # Did the user click the window close button?
     for event in pygame.event.get():
@@ -298,8 +335,12 @@ while running:
 
     screen.fill((0, 0, 0))
     board.show()
-    render_text(text="Player 1 last move: {}".format(last_move_p1), x=80, y=10, font_size=20)
-    render_text(text="Player 2 last move: {}".format(last_move_p2), x=300, y=10, font_size=20)
+    render_text(text="Player 1 last move: {}".format(last_move_p1), x=80, y=10, font_size=text_size)
+    render_text(text="Player 2 last move: {}".format(last_move_p2), x=300, y=10, font_size=text_size)
+    render_text(text="Player 1 score: {}".format(black_score), x=200, y=530, font_size=text_size)
+    render_text(text="Player 2 score: {}".format(white_score), x=400, y=530, font_size=text_size)
+    render_text(text="Player 1 confidence: {:.5f}".format(confidence_black), x=200, y=560, font_size=text_size - 5)
+    render_text(text="Player 2 confidence: {:.5f}".format(confidence_white), x=400, y=560, font_size=text_size - 5)
 
     # Flip the display
     pygame.display.flip()
