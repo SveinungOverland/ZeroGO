@@ -15,7 +15,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras import backend
-from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.optimizers import Adam
 
 import numpy as np
 
@@ -145,10 +145,10 @@ class Model:
       raise Exception("No acceptible mode given!")
     return net
   
-  def compile_net(self, learning_rate=0.01, momentum=0.9):
+  def compile_net(self, learning_rate=0.001, momentum=0.9):
     net = self.__retrieve_net(Mode.Model)
     net.compile(
-      optimizer=SGD(learning_rate=learning_rate, momentum=momentum),
+      optimizer=Adam(learning_rate=learning_rate),
       loss=['mean_squared_error', tf.nn.softmax_cross_entropy_with_logits_v2],
       metrics=['accuracy'],
     )
@@ -165,6 +165,8 @@ class Model:
   
   def predict(self, mode, X):
     net = self.__retrieve_net(mode)
+    print("X: ", X)
+    print("X Shape: ", X.shape)
     return net.predict(X)
   
   def describe(self, mode):

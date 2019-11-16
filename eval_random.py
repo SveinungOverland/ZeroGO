@@ -42,6 +42,7 @@ def play_against_random(agent: Agent, verbose: bool = False):
         # Execute move
         state, done = agent.env.simulate(state, move, player=current_player)
         if verbose:
+            print(f"State shape: {state.shape}")
             print(f"{current_player} did action: {move}")
             print(state[-1])
 
