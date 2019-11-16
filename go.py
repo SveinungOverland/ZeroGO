@@ -7,6 +7,7 @@ import sys
 import numpy as np
 from threading import Thread
 import argparse
+import random
 
 class Button:
     def __init__(self, x, y, width, height, color, screen, text):
@@ -150,8 +151,20 @@ def agent_move():
     board.is_black = not board.is_black
     change_player_turn(not player1_turn)
     execute_move()
-    player, x, y = board.go.moves[-1]
+    _, x, y = board.go.moves[-1]
     board.last_move = (x, y)
+
+def random_move():
+    if player1_turn:
+        x, y = random.choice(agent_black.env.get_action_space(state=board.go.get_game_state(), player=1))[0]
+        board.place_piece(x, y)
+        change_player_turn(not player1_turn)
+        execute_move()
+    else:
+        x, y = random.choice(agent_black.env.get_action_space(state=board.go.get_game_state(), player=1))[0]
+        board.place_piece(x, y)
+        change_player_turn(not player1_turn)
+        execute_move()
 
 def execute_move():
     if player1_turn:
@@ -171,30 +184,32 @@ agent_black.load(args.path)
 agent_white.load(args.path)
 print("Path: {}".format(args.path))
 
-if mode == "1v1":
-    turns = {
-        "player_1": player_move,
-        "player_2": player_move
-    }
-elif mode == "1va":
-    turns = {
-        "player_1": player_move,
-        "player_2": agent_move
-    }
-elif mode == "av1":
-    turns = {
-        "player_1": agent_move,
-        "player_2": player_move
-    }
-elif mode == "ava":
-    turns = {
-        "player_1": agent_move,
-        "player_2": agent_move
-    }
-
-    board.render_shadow = False
+player1_mode, player2_mode = mode.split("v")
+if player1_mode == "p"or player1_mode == "1":
+    player1 = player_move
+elif player1_mode == "a":
+    player1 = agent_move
+elif player1_mode == "r":
+    player1 = random_move
 else:
-    raise Exception("Fuck you mate, y u do dis?")
+    raise Exception("Fuck you mate, y u do dis? (Player1 mode is invalid)")
+
+if player2_mode == "p" or player2_mode == "1":
+    player2 = player_move
+elif player2_mode == "a":
+    player2 = agent_move
+elif player2_mode == "r":
+    player2 = random_move
+else:
+    raise Exception("Fuck you mate, y u do dis? (Player2 mode is invalid)")
+
+if player1_mode != "p" and player1_mode != "1" and player2_mode != "1" and player2_mode != "p":
+    board.render_shadow = False
+
+turns = {
+    "player_1": player1,
+    "player_2": player2
+}
 
 # Run until the user asks to quit
 running = True
