@@ -339,10 +339,8 @@ while running:
     board.show()
     render_text(text="Player 1 last move: {}".format(last_move_p1), x=80, y=10, font_size=text_size)
     render_text(text="Player 2 last move: {}".format(last_move_p2), x=300, y=10, font_size=text_size)
-    render_text(text="Player 1 score: {}".format(black_score), x=200, y=530, font_size=text_size)
-    render_text(text="Player 2 score: {}".format(white_score), x=400, y=530, font_size=text_size)
-    render_text(text="Player 1 confidence: {:.5f}".format(confidence_black), x=200, y=560, font_size=text_size - 5)
-    render_text(text="Player 2 confidence: {:.5f}".format(confidence_white), x=400, y=560, font_size=text_size - 5)
+    render_text(text="Player 1 score: {}".format(black_score), x=200, y=560, font_size=text_size)
+    render_text(text="Player 2 score: {}".format(white_score), x=400, y=560, font_size=text_size)
 
     # Flip the display
     pygame.display.flip()
