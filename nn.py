@@ -4,11 +4,11 @@ from Go.environment import Environment
 from NN.dcnn_v2 import Model, Mode, DataFormats
 
 class NNClient:
-    def __init__(self, c: float, dimension: int = 5, channel_size: int = 3, residual_layers: int = 10, filters=100, learning_rate=0.001):
+    def __init__(self, c: float, dimension: int = 5, channel_size: int = 3, residual_layers: int = 10, filters=100, learning_rate=0.001, kernel_size: tuple =(1,1)):
         self.c = c
         self.dimension = dimension
         data_format = DataFormats.ChannelsFirst if os.getenv("GPU") else DataFormats.ChannelsLast
-        self.model = Model.create(data_format=data_format, shape=(self.dimension, self.dimension, channel_size), kernel_size=(1, 1), nr_residual_layers=residual_layers, filters=filters)
+        self.model = Model.create(data_format=data_format, shape=(dimension, dimension, channel_size), kernel_size=kernel_size, nr_residual_layers=residual_layers, filters=filters)
         self.channel_size = channel_size
         self.learning_rate = learning_rate
 

@@ -10,14 +10,15 @@ c = 1.0
 channel_size = 7
 residual_layers = 30
 filters = 100
-steps = 50
 
 class Agent():
-    def __init__(self, player: int, dimension: int = 5):
+    def __init__(self, player: int, dimension: int = 5, steps: int = 50):
         self.nn_wrapper: NNClient = NNClient(c=c, dimension=dimension, channel_size=channel_size, residual_layers=residual_layers, filters=filters)
         self.env: Environment = Environment(dimension=dimension, max_state_size=channel_size//2)
         self.mcts: MCTS = MCTS(environment=self.env, neural_network=self.nn_wrapper, player_id=player, steps=steps)
         self.player: int = player
+        self.dimension = dimension
+        self.steps = steps
 
         # Compile model
         self.nn_wrapper.model.compile_predict(Mode.Model)
@@ -81,5 +82,5 @@ class Agent():
         c.env = agent.env
         c.nn_wrapper = agent.nn_wrapper
         c.player = agent.player
-        c.mcts = MCTS(environment=agent.env, neural_network=agent.nn_wrapper, player_id=agent.player, steps=steps)
+        c.mcts = MCTS(environment=agent.env, neural_network=agent.nn_wrapper, player_id=agent.player, steps=self.steps)
         return c

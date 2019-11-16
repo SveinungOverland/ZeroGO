@@ -8,6 +8,7 @@ import numpy as np
 from threading import Thread
 import argparse
 import random
+import os
 
 class Button:
     def __init__(self, x, y, width, height, color, screen, text):
@@ -93,7 +94,6 @@ class BoardView:
         self.button.show()
 
     def place_piece(self, row, column):
-        #self.board[row, column] = value
         status = self.go.make_move(row, column)
         self.board = self.go.get_board()
 
@@ -123,8 +123,8 @@ can_click_on_board = False
 player1_turn = True
 
 
-agent_black = Agent(1)
-agent_white = Agent(2)
+agent_black = Agent(1, dimension=dimension, steps=75)
+agent_white = Agent(2, dimension=dimension, steps=75)
 
 def change_can_click_on_board(value):
     global can_click_on_board
@@ -139,6 +139,7 @@ def player_move():
 
 def agent_move():
     print("Current game state: {}".format(board.go.get_game_state()))
+    print("Current game state: {}".format(board.go.get_game_state().shape))
     if player1_turn:
         x, y = agent_black.pick_action(state=board.go.get_game_state())
         print(f"Move: {x}, {y}")
