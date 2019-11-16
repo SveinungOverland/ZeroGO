@@ -93,7 +93,7 @@ class MCTS:
     # assume that the state says who is playing, if its friendly or evil opponent
     def tree_search(self, node: Node):
         if len(node.children) > 0:
-            self.tree_search(self.choose_node(node) if !self.vanilla else choose_node_vanilla(node))
+            self.tree_search(self.choose_node(node) if not self.vanilla else choose_node_vanilla(node))
         else:
             # hit leaf_node. Expand this node.
             if node.visits == 0: 
@@ -105,7 +105,7 @@ class MCTS:
                 node.children = [Node(action=action, state=self.__append_state(node.state, state), parent=node, player=player_opponent) for (action, state) in self.environment.get_action_space(node.state, node.player)] #expanding node with all the posible actions and states.
                 if len(node.children) == 0:
                     return
-                self.rollout(self.choose_node(node) if !self.vanilla else choose_node_vanilla(node))
+                self.rollout(self.choose_node(node) if  not self.vanilla else choose_node_vanilla(node))
 
 
     def train(self, training_steps: int):

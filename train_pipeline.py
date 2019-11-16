@@ -1,5 +1,5 @@
 from agent import Agent
-from train_v2 import self_play, retrain, evaluate, save_and_log, TRAINING_DATA_DIR, TRAINING_DATA_FILE_NAME, MODEL_DIR
+from train_v2 import self_play, self_play_multi, retrain, evaluate, save_and_log, TRAINING_DATA_DIR, TRAINING_DATA_FILE_NAME, MODEL_DIR
 from Go.go import BLACK, WHITE
 from datetime import datetime 
 import time
@@ -9,48 +9,70 @@ import os
 
 TRAIN_STOP_TIME = '06/12/19 14:00:00'
 VERSION = 1
+VERBOSE = True
 
 training_end_time = datetime.strptime(TRAIN_STOP_TIME, '%d/%m/%y %H:%M:%S').timestamp()
-current_training_iteration = 0
-best_agent = Agent(BLACK)
-while training_end_time > time.time():
-    run_id = int(time.time())
-    base_path = f"models/v{VERSION}"
-    save_path = f"{base_path}/{run_id}"
-    training_data_path = f"{base_path}/{TRAINING_DATA_DIR}"
 
-    # Make necessary directories
-    necessary_dirs = [training_data_path, f"{save_path}/{MODEL_DIR}"]
-    for directory in necessary_dirs:
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+base_path = f"models/v{VERSION}"
+best_agent_path = f"{base_path}/best"
 
-    # SELF PLAY
-    best_metrics = self_play(best_agent, games_to_play=1, concurrency=5, save_path=save_path, training_data_save_path=base_path, max_game_iterations=10, save_model=True, verbose=True)
+def exec_pipeline():
+    best_agent = Agent(BLACK).load(model_path=best_agent_path)
+    current_training_iteration = 0
 
-    # Log and save model
-    save_and_log(best_agent, None, save_path=save_path, iteration=current_training_iteration, log=False, overwrite=True)
+    while training_end_time > time.time():
+        run_id = int(time.time())
+        save_path = f"{base_path}/{run_id}"
+        training_data_path = f"{base_path}/{TRAINING_DATA_DIR}"
 
-    # RETRAIN NETWORK
-    # Creating a new agent that trains on the previous X amount of positions Y times
-    latest_agent = Agent(WHITE)
-    latest_metrics = retrain(latest_agent, training_batch=50, training_loops=1, training_data_save_path=base_path, verbose=True)
+        # Make necessary directories
+        necessary_dirs = [training_data_path, f"{save_path}/{MODEL_DIR}", best_agent_path, f"{save_path}/temp"]
+        for directory in necessary_dirs:
+            if not os.path.exists(directory):
+                os.makedirs(directory)
 
-    # EVALUATE NETWORK
-    # Evaluating and choosing between the latest_agent and the best_agent
+        start_time = time.time()
 
-    # Evaluate and pick best agent
-    new_best_agent = evaluate(best_agent, latest_agent, games_to_play=3, save_path=save_path, verbose=True, verbose_play=True)
-    
-    metrics = None
-    if new_best_agent == best_agent:
-        metrics = best_metrics
-    else:
-        metrics = latest_metrics
-    best_agent = new_best_agent
+        # SELF PLAY
+        print("\n\n-------- SELF PLAY ----------")
+        best_metrics = self_play_multi(best_agent, iterations=1, num_of_processes=5, save_path=save_path, training_data_save_path=base_path, max_game_iterations=3, save_model=True, verbose=VERBOSE)
+        # best_metrics = self_play(best_agent, games_to_play=1, save_path=save_path, training_data_save_path=base_path, model_save_rate=0, max_game_iterations=2, verbose=VERBOSE)
 
-    # Save and log the best agent
-    save_and_log(best_agent, metrics=metrics, save_path=save_path, iteration=current_training_iteration, log=True, overwrite=True)
+        # Log and save model
+        save_and_log(best_agent, None, save_path=save_path, iteration=current_training_iteration, log=False, overwrite=True)
 
-    current_training_iteration += 1
+        # RETRAIN NETWORK
+        # Creating a new agent that trains on the previous X amount of positions Y times
+        print("\n\n-------- RETRAIN NETWORK ----------")
+        latest_agent = Agent(WHITE)
+        latest_metrics = retrain(latest_agent, training_batch=100, training_loops=5, training_data_save_path=base_path, verbose=VERBOSE)
 
+        # EVALUATE NETWORK
+        # Evaluating and choosing between the latest_agent and the best_agent
+
+        # Evaluate and pick best agent
+        print("\n\n-------- EVALUATE ----------")
+        new_best_agent = evaluate(best_agent, latest_agent, games_to_play=7, save_path=save_path, max_game_iterations=50, verbose=VERBOSE, verbose_play=VERBOSE)
+        
+        metrics = None
+        if new_best_agent == best_agent:
+            metrics = best_metrics
+        else:
+            metrics = latest_metrics
+        best_agent = new_best_agent
+
+        # Save and log the best agent
+        save_and_log(best_agent, metrics=metrics, save_path=save_path, iteration=current_training_iteration, log=True, overwrite=True, custom_save_path=best_agent_path)
+        save_and_log(best_agent, metrics=metrics, save_path=save_path, iteration=current_training_iteration, log=False, overwrite=True)
+
+        current_training_iteration += 1
+
+        end_time = time.time()
+
+        print(f"Iteration {current_training_iteration} completed! Time used: {end_time - start_time}")
+
+    print("\n\nStopped training! Done!")
+
+
+if __name__ == '__main__':
+    exec_pipeline()

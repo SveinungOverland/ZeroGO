@@ -1,4 +1,4 @@
-from Go.go import (execute_move, opponent, all_possible_moves, calculate_score, BLACK, WHITE, TIE, VALID_MOVE)
+from Go.go import (execute_move, opponent, all_possible_moves, calculate_score, BLACK, WHITE, TIE, VALID_MOVE, PASS_MOVE)
 import numpy as np
 import random
 
@@ -75,23 +75,46 @@ class Environment:
     def empty_board(self):
         return np.zeros(shape=(self.dimension, self.dimension), dtype=int)
 
-    def rollout(self, state: np.array, start_player:int):
+    def rollout(self, state: np.array, player: int, start_player: int):
+        # Playing five random games with different aspect
+        win1 = self.play_random(state=state, start_player=start_player)
+        win2 = self.play_random(state=state, start_player=start_player)
+        win3 = self.play_random(state=state, start_player=start_player, max_iterations=10)
+        win4 = self.play_random(state=state, start_player=start_player, max_iterations=10)
+        win5 = self.play_random(state=state, start_player=start_player, only_pass=True)
+
+        wins = [win1, win2, win3, win4]
+        if win5 == player:
+            wins.append(win5)
+        # Filter away ties (3)
+        valid_games = [w for w in wins if w != 3]
+        # Convert the wins to booleans, count the amount of wins, and if
+        return sum([w == player for w in valid_games]) >= 2
+
+    def play_random(self, state: np.array, start_player:int, max_iterations: int = None, only_pass: bool = False):
+        if max_iterations is None:
+            max_iterations = self.max_rollout_iterations
+
         done = False
         history = state.copy()
         
         iterations = 0
         current_player = start_player
-        while not done and iterations < self.max_rollout_iterations:
-            # Get all valid movies
-            moves = self.get_action_space(history, player=current_player)
-            if len(moves) == 0:
-                done = True
-                continue
-            
-            # Select a random move
-            rand_index = random.randint(0, len(moves) - 1)
-            move = moves[rand_index]
-            move_x, move_y = move[0]
+        while not done and iterations < max_iterations:
+            move = None
+            if only_pass and iterations&1 == 0:
+                move = PASS_MOVE
+            else:
+                # Get all valid movies
+                moves = self.get_action_space(history, player=current_player)
+                if len(moves) == 0:
+                    done = True
+                    continue
+                
+                # Select a random move
+                rand_index = random.randint(0, len(moves) - 1)
+                move = moves[rand_index][0]
+            move_x, move_y = move
 
             # Execute move
             history, done = self.simulate(state=history, action=(move_x, move_y), player=current_player)
