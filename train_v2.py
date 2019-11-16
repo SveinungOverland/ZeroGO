@@ -96,7 +96,6 @@ def save_and_log(agent: Agent, metrics: np.array, save_path: str, iteration: int
             print(f"MFlux Error: {e}")
 
 def play_game_multi(model_path: str, player: int, max_game_iterations: int):
-    print("Starting process")
     a = Agent(player).load(model_path)
     
     winner = play_game(a, None, max_game_iterations=max_game_iterations, verbose=True)
@@ -108,7 +107,6 @@ def play_game_multi(model_path: str, player: int, max_game_iterations: int):
         training_data[i] = (data[0], data[1], z if i&1 == 0 else -z)
     training_data = np.array(training_data)
 
-    print("Process finished!")
     return training_data
 
 
@@ -147,6 +145,9 @@ def self_play_multi(agent: Agent, iterations: int, num_of_processes: int, save_p
         if verbose:
             print("Starting to train on data")
 
+        # Compiling model
+        agent.compile_model()
+
         # Train on the training data
         for i, data in enumerate(training_data):
             if verbose:
@@ -179,6 +180,8 @@ def self_play(agent: Agent, games_to_play: int, save_path: str, training_data_sa
 
     if verbose:
         print(f"Agent starting to train {games_to_play} games against itself")
+
+    agent.compile_model()
 
     metrics = None
     for i in range(games_to_play):
@@ -223,6 +226,9 @@ def retrain(agent: Agent, training_batch: int, training_loops: int, training_dat
 
     if verbose:
         print(f"Number of training files found: {training_files_count}")
+
+    # Compiling model
+    agent.compile_model()
 
     for loop_count in range(training_loops):
         if verbose:

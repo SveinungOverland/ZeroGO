@@ -9,7 +9,7 @@ import os
 
 TRAIN_STOP_TIME = '06/12/19 14:00:00'
 VERSION = 1
-VERBOSE = True
+VERBOSE = False
 
 training_end_time = datetime.strptime(TRAIN_STOP_TIME, '%d/%m/%y %H:%M:%S').timestamp()
 
@@ -35,7 +35,7 @@ def exec_pipeline():
 
         # SELF PLAY
         print("\n\n-------- SELF PLAY ----------")
-        best_metrics = self_play_multi(best_agent, iterations=1, num_of_processes=5, save_path=save_path, training_data_save_path=base_path, max_game_iterations=3, save_model=True, verbose=VERBOSE)
+        best_metrics = self_play_multi(best_agent, iterations=4, num_of_processes=15, save_path=save_path, training_data_save_path=base_path, max_game_iterations=50, save_model=True, verbose=VERBOSE)
         # best_metrics = self_play(best_agent, games_to_play=1, save_path=save_path, training_data_save_path=base_path, model_save_rate=0, max_game_iterations=2, verbose=VERBOSE)
 
         # Log and save model

@@ -8,7 +8,7 @@ class NNClient:
         self.c = c
         self.dimension = dimension
         data_format = DataFormats.ChannelsFirst if os.getenv("GPU") else DataFormats.ChannelsLast
-        self.model = Model.create(data_format=data_format, shape=(5, 5, channel_size), kernel_size=(1, 1), nr_residual_layers=residual_layers, filters=filters)
+        self.model = Model.create(data_format=data_format, shape=(self.dimension, self.dimension, channel_size), kernel_size=(1, 1), nr_residual_layers=residual_layers, filters=filters)
         self.channel_size = channel_size
         self.learning_rate = learning_rate
 
@@ -26,14 +26,11 @@ class NNClient:
     
     def train(self, state: np.array, player: int, z: float, pi: np.array):
         nn_input = self.__state_to_nn_input(state, player, self.channel_size)
-        """ v, p = self.predict(state, player)
-        theta = self.model.get_trunk_weights()
-        loss = self.loss(z, v, pi, p[0], self.c, theta)[0][0]
-        print("Loss: ", loss) """
+        
         z = np.array([float(z)])
         pi = np.array([pi])
 
-        return self.model.train(nn_input, z, pi, learning_rate=self.learning_rate)
+        return self.model.train(nn_input, z, pi)
     
     def loss(self, z: float, v: int, pi: np.array, p: np.array, c: int, theta: np.array) -> float:
         """
@@ -46,6 +43,9 @@ class NNClient:
 
     def load_model(self, file_path: str):
         self.model.load(file_path)
+
+    def compile_model(self):
+        self.model.compile_net(learning_rate=self.learning_rate)
 
     def __state_to_nn_input(self, states: np.array, player: int, channel_size: int) -> np.array:
         # This be correct padding?

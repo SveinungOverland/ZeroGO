@@ -35,9 +35,9 @@ class Environment:
                 raise Exception(f"Invalid move for player {player}: ({x}, {y}). Error-code: {status}\nState:\n{new_state}")
 
             # Add move to a copy of the history
-            new_history = np.append(new_history, new_state.reshape(1, 5, 5), axis=0)
+            new_history = np.append(new_history, new_state.reshape(1, self.dimension, self.dimension), axis=0)
         else:
-            new_history = np.append(new_history, current_state.reshape(1, 5, 5), axis=0)
+            new_history = np.append(new_history, current_state.reshape(1, self.dimension, self.dimension), axis=0)
             
 
         # Check if we are done!

@@ -7,14 +7,13 @@ import numpy as np
 from Utils.rotation import rotate_training_data
 
 c = 1.0
-dimension = 5
 channel_size = 7
 residual_layers = 30
 filters = 100
 steps = 50
 
 class Agent():
-    def __init__(self, player: int):
+    def __init__(self, player: int, dimension: int = 5):
         self.nn_wrapper: NNClient = NNClient(c=c, dimension=dimension, channel_size=channel_size, residual_layers=residual_layers, filters=filters)
         self.env: Environment = Environment(dimension=dimension, max_state_size=channel_size//2)
         self.mcts: MCTS = MCTS(environment=self.env, neural_network=self.nn_wrapper, player_id=player, steps=steps)
@@ -28,6 +27,9 @@ class Agent():
 
     def pick_action(self, state):
         return self.mcts.pick_action(state)
+
+    def compile_model(self):
+        self.nn_wrapper.compile_model()
 
     def train(self, won: bool, verbose: bool = False):
         training_iteration_count = len(self.mcts.buffer.data)
