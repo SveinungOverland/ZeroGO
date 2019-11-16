@@ -116,7 +116,13 @@ line_gap = board_width / dimension
 board_x = 50 + line_gap / 2
 board_y = 50 + line_gap / 2
 
-board = BoardView(screen, board_x, board_y, board_width, board_height, dimension=dimension)
+parser = argparse.ArgumentParser(description="Go game")
+parser.add_argument("-mode", "--mode", type=str, help="Define players, (e.g 1v1, 1va, ava)", default="1va")
+parser.add_argument("-path", "--path", type=str, help="Path for weights?", default="models/v1/best")
+parser.add_argument("-dimension", "--dimension", type=int, help="Board dimension", default=5)
+args = parser.parse_args()
+
+board = BoardView(screen, board_x, board_y, board_width, board_height, dimension=args.dimension)
 
 global can_click_on_board
 can_click_on_board = False
@@ -162,7 +168,7 @@ def random_move():
         change_player_turn(not player1_turn)
         execute_move()
     else:
-        x, y = random.choice(agent_black.env.get_action_space(state=board.go.get_game_state(), player=1))[0]
+        x, y = random.choice(agent_black.env.get_action_space(state=board.go.get_game_state(), player=2))[0]
         board.place_piece(x, y)
         change_player_turn(not player1_turn)
         execute_move()
@@ -175,11 +181,6 @@ def execute_move():
     
     thread.start()
 
-parser = argparse.ArgumentParser(description="Go game")
-parser.add_argument("-mode", "--mode", type=str, help="Define players, (e.g 1v1, 1va, ava)", default="1va")
-parser.add_argument("-path", "--path", type=str, help="Path for weights?", default="models/v1/best")
-
-args = parser.parse_args()
 mode = args.mode
 agent_black.load(args.path)
 agent_white.load(args.path)
