@@ -39,3 +39,11 @@ class Node:
         Q = self.wins/self.visits
         U = c * naural_network_policy * sqrt(total_visits/self.visits)
         return Q + U if opponent else Q - U
+
+    def UCB1(self,opponent: bool, total_visits : int, c: float) -> float:
+        if self.visits == 0:
+            return inf
+
+        Q = self.wins/self.visits
+        U = c * sqrt(total_visits/self.visits)
+        return Q + U if opponent else Q - U

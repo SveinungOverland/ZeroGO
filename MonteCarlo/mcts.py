@@ -27,7 +27,7 @@ Back propagation — back propagate to all the visited nodes, increase by 1
 class MCTS:
     # add the environment that the MCTS is going to train on
     # add the neural_network, This network is created ahead, instead of created here. s
-    def __init__(self,  environment , neural_network,  player_id: int, steps: int = 10, c: float = 1.0, tau: float = 1.2):
+    def __init__(self,  environment , neural_network,  player_id: int, steps: int = 10, c: float = 1.0, tau: float = 1.2, vanilla: bool = False):
         self.environment = environment
         self.neural_network = neural_network
         self.buffer = Buffer()
@@ -36,6 +36,7 @@ class MCTS:
         self.c = c
         self.tau = tau
         self.steps = steps
+        self.vanilla = vanilla
 
     def initialize_root(self, state):
         self.root_node = Node(None, state, None, self.player_id)
@@ -51,7 +52,7 @@ class MCTS:
 
 
     def rollout(self, node: Node):
-        win = self.environment.rollout(state=node.state, player=self.player_id, start_player=node.player)
+        win = self.environment.rollout(state=node.state, start_player=node.player) == self.player_id
         self.back_propagation(node, win)
     
     def back_propagation(self, node: Node, win: bool):
@@ -81,10 +82,18 @@ class MCTS:
         else:
             return node.children[np.array(list(node.PUCT(False, total_visits, self.c, filtered_neural_policies[index]) for (index, node) in enumerate(node.children))).argmin()]
 
+    def choose_node_vanilla(self, node:Node):
+        total_visits = node.visits
+        if node.player == self.player_id:
+            return node.children[np.array(list(node.UCB1(True, total_visits, self.c) for (index, node) in enumerate(node.children))).argmax()]
+        else:
+            return node.children[np.array(list(node.UCB1(False, total_visits, self.c) for (index, node) in enumerate(node.children))).argmin()]
+
+
     # assume that the state says who is playing, if its friendly or evil opponent
     def tree_search(self, node: Node):
         if len(node.children) > 0:
-            self.tree_search(self.choose_node(node))
+            self.tree_search(self.choose_node(node) if not self.vanilla else choose_node_vanilla(node))
         else:
             # hit leaf_node. Expand this node.
             if node.visits == 0: 
@@ -96,7 +105,7 @@ class MCTS:
                 node.children = [Node(action=action, state=self.__append_state(node.state, state), parent=node, player=player_opponent) for (action, state) in self.environment.get_action_space(node.state, node.player)] #expanding node with all the posible actions and states.
                 if len(node.children) == 0:
                     return
-                self.rollout(self.choose_node(node))
+                self.rollout(self.choose_node(node) if  not self.vanilla else choose_node_vanilla(node))
 
 
     def train(self, training_steps: int):
