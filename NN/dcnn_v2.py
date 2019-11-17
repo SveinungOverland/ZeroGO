@@ -165,8 +165,6 @@ class Model:
   
   def predict(self, mode, X):
     net = self.__retrieve_net(mode)
-    print("X: ", X)
-    print("X Shape: ", X.shape)
     return net.predict(X)
   
   def describe(self, mode):
