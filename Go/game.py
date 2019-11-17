@@ -80,7 +80,7 @@ class Game:
         np.save(full_path, state)
 
     @staticmethod
-    def load(self, file_path: str):
+    def load(file_path: str):
         file_name = "game_data.npy"
         file_path = file_path[:-1] if file_path[-1] == "/" else file_path
         full_path = file_path + "/" + file_name

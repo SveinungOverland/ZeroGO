@@ -10,6 +10,8 @@ from threading import Thread
 import argparse
 import random
 import os
+from tkinter import *
+from tkinter import messagebox
 
 class Button:
     def __init__(self, x, y, width, height, color, screen, text):
@@ -46,8 +48,13 @@ class BoardView:
         self.radius = int(self.line_gap / 2.2)
 
         self.is_black = True
-        self.button = Button(x=self.x, y=self.height + self.line_gap / 2,
+
+        self.pass_button = Button(x=self.x, y=self.height + self.line_gap - 20,
         width=100, height=40, color=(255, 255, 255), screen=screen, text="Pass")
+
+        self.save_button = Button(x=self.x + self.pass_button.width + 5, y=self.height + self.line_gap - 20,
+        width=100, height=40, color=(255, 255, 255), screen=screen, text="Save")
+
         self.screen = screen
         self.last_move = None
 
@@ -56,7 +63,12 @@ class BoardView:
 
         self.render_shadow = True
 
-    def show(self):
+        # Animation stuff
+        self.frame_count = 0
+        self.game_to_animate = np.array([])
+
+
+    def show(self, show_buttons=True):
         # Set background
         self.screen.fill((237, 181, 101))
 
@@ -99,7 +111,9 @@ class BoardView:
             y = int(self.y + self.last_move_white[0] * self.line_gap)
             pygame.draw.circle(self.screen, (255, 0, 0), (x, y), int(self.radius / 1.2), 1)
         
-        self.button.show()
+        if show_buttons:
+            self.pass_button.show()
+            self.save_button.show()
 
     def place_piece(self, row, column):
         status = self.go.make_move(row, column)
@@ -112,12 +126,51 @@ class BoardView:
 
     def move_shadow(self, row, column):
         self.shadow_piece = (row, column)
+    
+    def update_animation(self):
+        self.frame_count += 1
+
+        if self.frame_count % (FPS * interval) == 0:
+            self.next_board()
+
+    
+    def next_board(self):
+        if self.game_to_animate.size > 0:
+            new_board = self.game_to_animate[0]
+                
+            for row_index, row in enumerate(new_board):
+                for col_index, col in enumerate(row):
+                    if new_board[row_index, col_index] != self.board[row_index, col_index]:
+                        if new_board[row_index, col_index] == 1:
+                            change_last_move_p1((row_index, col_index))
+                        else:
+                            change_last_move_p2((row_index, col_index))
+
+            new_black_score, new_white_score, _ = calculate_score(new_board)
+            change_black_score(new_black_score)
+            change_white_score(new_white_score)
+            
+            self.board = new_board
+            self.game_to_animate = self.game_to_animate[1:]
 
 # Set up the drawing window
 global screen
-screen = pygame.display.set_mode([600, 600])
 
-button = Button(x=100, y=100, width=100, height=40, color=(128, 128, 128), screen=screen, text="Pass")
+parser = argparse.ArgumentParser(description="Go game")
+parser.add_argument("-mode", "--mode", type=str, help="Define players, (e.g 1v1, 1va, ava)", default="1va")
+parser.add_argument("-path", "--path", type=str, help="Path for weights?", default="models/v1/best")
+parser.add_argument("-dimension", "--dimension", type=int, help="Board dimension", default=5)
+parser.add_argument("-loadfile", "--loadfile", type=str, help="Load board to animate", default=None)
+parser.add_argument("-interval", "--interval", type=int, help="Seconds between each animation frame", default=2)
+args = parser.parse_args()
+
+
+screen = pygame.display.set_mode([600, 600])
+global FPS
+global interval
+FPS = 60
+interval = args.interval
+
 
 board_width = 500
 board_height = 500
@@ -125,20 +178,26 @@ dimension = 7
 line_gap = board_width / dimension
 board_x = 50 + line_gap / 2
 board_y = 50 + line_gap / 2
-
-parser = argparse.ArgumentParser(description="Go game")
-parser.add_argument("-mode", "--mode", type=str, help="Define players, (e.g 1v1, 1va, ava)", default="1va")
-parser.add_argument("-path", "--path", type=str, help="Path for weights?", default="models/v1/best")
-parser.add_argument("-dimension", "--dimension", type=int, help="Board dimension", default=5)
-args = parser.parse_args()
+text_size = 20
 
 mode = args.mode
+loadfile = args.loadfile
+    
+
+animate = loadfile != None
 
 agent_black = Agent(1, dimension=dimension, steps=75)
 agent_white = Agent(2, dimension=dimension, steps=75)
 agent_black.load(args.path)
 agent_white.load(args.path)
 board = BoardView(screen, board_x, board_y, board_width, board_height, dimension=args.dimension)
+
+
+if loadfile:
+    board.game_to_animate = Game.load(file_path=loadfile)
+
+
+# Ultimate global variables with individual set method spaghetti mess.
 
 global can_click_on_board
 can_click_on_board = False
@@ -160,6 +219,9 @@ conf_b, _ = agent_black.predict(state=board.go.get_game_state(), player=1)
 conf_w, _ = agent_black.predict(state=board.go.get_game_state(), player=2)
 confidence_black = conf_b[0][0]
 confidence_white = conf_w[0][0]
+
+global paused
+paused = False
 
 
 def change_confidence_black(val):
@@ -195,6 +257,10 @@ def change_can_click_on_board(value):
 def change_player_turn(value):
     global player1_turn
     player1_turn = value
+
+def change_paused(value):
+    global paused
+    paused = value
 
 def player_move():
     change_can_click_on_board(True)
@@ -240,9 +306,6 @@ def execute_move():
     value_w, _ = agent_black.predict(state=board.go.get_game_state(), player=2)
     value_b = value_b[0][0]
     value_w = value_w[0][0]
-
-    print(f"Conf_black: {value_b}")
-    print(f"Conf_white: {value_w}")
 
     change_confidence_black(value_b)
     change_confidence_white(value_w)
@@ -290,57 +353,90 @@ turns = {
 
 # Run until the user asks to quit
 running = True
-execute_move()
-text_size = 20
+if not animate:
+    execute_move()
+else:
+    board.render_shadow = False
+
+
 while running:
-    # Did the user click the window close button?
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        elif event.type == pygame.MOUSEMOTION:
-            x, y = pygame.mouse.get_pos()
-            actual_x = x - board_x + line_gap / 2
-            actual_y = y - board_y + line_gap / 2
+    if not animate:
+        # Did the user click the window close button?
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.MOUSEMOTION:
+                x, y = pygame.mouse.get_pos()
+                actual_x = x - board_x + line_gap / 2
+                actual_y = y - board_y + line_gap / 2
 
 
-            row = actual_y // line_gap
-            column = actual_x // line_gap
+                row = actual_y // line_gap
+                column = actual_x // line_gap
 
-            if row >= 0 and row < dimension and column >= 0 and column < dimension:
-                board.move_shadow(row=row, column=column)
-                
-        elif event.type == pygame.MOUSEBUTTONUP:
-            if not can_click_on_board:
-                continue
-
-            x, y = pygame.mouse.get_pos()
-            if board.button.collision(x, y):
-                board.is_black = not board.is_black
-                board.go.do_pass()
-            else:
-                row, column = board.shadow_piece
-                row = int(row)
-                column = int(column)
                 if row >= 0 and row < dimension and column >= 0 and column < dimension:
-                    board.place_piece(row, column)
+                    board.move_shadow(row=row, column=column)
                     
-                    if player1_turn:
-                        change_last_move_p1((row, column))
-                    else:
-                        change_last_move_p2((row, column))
-            
-            change_can_click_on_board(False)
-            change_player_turn(not player1_turn)
-            execute_move()
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if not can_click_on_board:
+                    continue
+
+                x, y = pygame.mouse.get_pos()
+                if board.pass_button.collision(x, y):
+                    board.is_black = not board.is_black
+                    board.go.do_pass()
+                elif board.save_button.collision(x, y):
+                    board.go.save(file_path="./saved_games")
+                    Tk().wm_withdraw() #to hide the main window
+                    messagebox.showinfo("Save successful!", "The game is saved!")
+                else:
+                    row, column = board.shadow_piece
+                    row = int(row)
+                    column = int(column)
+                    if row >= 0 and row < dimension and column >= 0 and column < dimension:
+                        board.place_piece(row, column)
+                        
+                        if player1_turn:
+                            change_last_move_p1((row, column))
+                        else:
+                            change_last_move_p2((row, column))
+                
+                change_can_click_on_board(False)
+                change_player_turn(not player1_turn)
+                execute_move()
+
+        screen.fill((0, 0, 0))
+        board.show()
+    else:
+        # Need this or the program will not run when animating.
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    change_paused(not paused)
+                elif event.key == pygame.K_RIGHT:
+                    board.next_board()
+
+        #delta_time = clock.tick(FPS) / 1000    # Seconds passed since previous frame
+        if not paused:
+            board.update_animation()
+        else:
+            #print("We are paused!")
+            render_text(text="Paused", x=100, y=560, font_size=30)
+        
+        screen.fill((0, 0, 0))
+        board.show(show_buttons=False)
+        
 
 
-
-    screen.fill((0, 0, 0))
-    board.show()
     render_text(text="Player 1 last move: {}".format(last_move_p1), x=80, y=10, font_size=text_size)
     render_text(text="Player 2 last move: {}".format(last_move_p2), x=300, y=10, font_size=text_size)
-    render_text(text="Player 1 score: {}".format(black_score), x=200, y=560, font_size=text_size)
-    render_text(text="Player 2 score: {}".format(white_score), x=400, y=560, font_size=text_size)
+    render_text(text="Player 1 score: {}".format(black_score), x=310, y=560, font_size=text_size)
+    render_text(text="Player 2 score: {}".format(white_score), x=460, y=560, font_size=text_size)
+
+    if paused:
+        render_text(text="Paused", x=100, y=560, font_size=30)
 
     # Flip the display
     pygame.display.flip()
