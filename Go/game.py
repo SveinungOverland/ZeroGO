@@ -19,6 +19,10 @@ class Game:
         self.history.append(copy.deepcopy(self.board))
         self.__store_move(self.__player_turn, x, y)
 
+        if (x, y) == PASS_MOVE:
+            self.__switch_turn()
+            return VALID_MOVE
+
         # Make move
         board, status = execute_move(self.board, (self.__player_turn, x ,y), self.history)
 

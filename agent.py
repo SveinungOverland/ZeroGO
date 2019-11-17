@@ -76,6 +76,10 @@ class Agent():
         self.nn_wrapper.load_model(file_path=model_path)
         return self
 
+    def predict(self, state: np.array, player: int):
+        return self.nn_wrapper.predict(state=state, player=player)
+
+
     @classmethod
     def copy(cls, agent: 'Agent') -> 'Agent':
         c = cls.__new__(cls)
