@@ -38,6 +38,7 @@ class Game:
     def do_pass(self):
         # Pass
         self.moves.append((self.__player_turn, -1, -1))
+        self.history.append(copy.deepcopy(self.board))
 
         # Check if both players has passed, if so, declare end of game
         if len(self.moves) >= 2 and self.moves[-2][1] == -1 and self.moves[-2][2] == -1:
@@ -71,6 +72,19 @@ class Game:
         '''
         self.history.pop()
         self.moves.pop()
+
+    def save(self, file_path: str, file_name="game_data.npy"):
+        state = self.get_game_state()
+        file_path = file_path[:-1] if file_path[-1] == "/" else file_path
+        full_path = file_path + "/" + file_name
+        np.save(full_path, state)
+
+    @staticmethod
+    def load(file_path: str, file_name="game_data.npy"):
+        file_path = file_path[:-1] if file_path[-1] == "/" else file_path
+        full_path = file_path + "/" + file_name
+        state = np.load(full_path, allow_pickle=True)
+        return state
 
     def __str__(self):
         return board_to_string(self.board)
