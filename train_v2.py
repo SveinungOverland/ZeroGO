@@ -184,10 +184,11 @@ def self_play(agent: Agent, games_to_play: int, save_path: str, training_data_sa
 
     agent.compile_model()
 
-    time_values = [None,None]
+    time_values = [None,None,None,None]
 
     metrics = None
     for i in range(games_to_play):
+        start_total = time.time()
         # Play game
         agent.mcts.buffer.clear()
         start  = time.time()
@@ -199,11 +200,11 @@ def self_play(agent: Agent, games_to_play: int, save_path: str, training_data_sa
         metrics = agent.train(winner == agent.player, verbose=verbose)
         time_values[1] = time.time() - start 
         # Save the training data
-        write_to_file(time_values)
         
+
         if verbose:
             print("Starting to save training data")
-        
+        start = time.time()
         training_data = agent.mcts.buffer.data.copy()
         z = 1 if winner == agent.player else -1
         for j, data in enumerate(training_data):
@@ -211,10 +212,14 @@ def self_play(agent: Agent, games_to_play: int, save_path: str, training_data_sa
             training_data[j] = (data[0], data[1], z if i&1 == 0 else -z)
         training_data = np.array(training_data)
         np.save(f"{training_data_save_path}/{TRAINING_DATA_DIR}/{TRAINING_DATA_FILE_NAME}_{int(time.time())}.npy", training_data)
-
+        
         # Log and save model
         if (model_save_rate > 0 and (i == 0 or model_save_rate%i == 0)) or model_save_rate == 0:
             save_and_log(agent, metrics, save_path, i, log=False, overwrite=True)
+        time_values[2] = time.time() - start
+
+        time_values[3] = time.time() - start_total
+        write_to_file(time_values)
 
         if verbose:
             print(f"Finished training and saving game {i+1}/{games_to_play}")
