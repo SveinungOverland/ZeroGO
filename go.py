@@ -10,8 +10,12 @@ from threading import Thread
 import argparse
 import random
 import os
+
 from tkinter import *
+import tkinter
 from tkinter import messagebox
+from tkinter.simpledialog import askstring
+from tkinter.messagebox import showinfo
 
 class Button:
     def __init__(self, x, y, width, height, color, screen, text):
@@ -66,6 +70,7 @@ class BoardView:
         # Animation stuff
         self.frame_count = 0
         self.game_to_animate = np.array([])
+        self.last_player = 1
 
 
     def show(self, show_buttons=True):
@@ -137,15 +142,26 @@ class BoardView:
     def next_board(self):
         if self.game_to_animate.size > 0:
             new_board = self.game_to_animate[0]
-                
+            
+
+            found_change = False
             for row_index, row in enumerate(new_board):
-                for col_index, col in enumerate(row):
+                for col_index, _ in enumerate(row):
                     if new_board[row_index, col_index] != self.board[row_index, col_index]:
                         if new_board[row_index, col_index] == 1:
                             change_last_move_p1((row_index, col_index))
                         else:
                             change_last_move_p2((row_index, col_index))
+                        found_change = True
+                        break
+            
+            if not found_change:
+                if self.last_player == 1:
+                    change_last_move_p2((-1, -1))
+                else:
+                    change_last_move_p1((-1, -1))
 
+            self.last_player = 2 if self.last_player == 1 else 1
             new_black_score, new_white_score, _ = calculate_score(new_board)
             change_black_score(new_black_score)
             change_white_score(new_white_score)
@@ -158,8 +174,8 @@ global screen
 
 parser = argparse.ArgumentParser(description="Go game")
 parser.add_argument("-mode", "--mode", type=str, help="Define players, (e.g 1v1, 1va, ava)", default="1va")
-parser.add_argument("-path", "--path", type=str, help="Path for weights?")
-parser.add_argument("-dimension", "--dimension", type=int, help="Board dimension", default=5)
+parser.add_argument("-path", "--path", type=str, help="Path for weights?", default="test_models/BestModel_7x7")
+parser.add_argument("-dimension", "--dimension", type=int, help="Board dimension", default=7)
 parser.add_argument("-loadfile", "--loadfile", type=str, help="Load board to animate", default=None)
 parser.add_argument("-interval", "--interval", type=int, help="Seconds between each animation frame", default=2)
 args = parser.parse_args()
@@ -196,8 +212,21 @@ if args.path:
 board = BoardView(screen, board_x, board_y, board_width, board_height, dimension=args.dimension)
 
 
+def is_equal(n1, n2):
+    for row1, row2 in zip(n1, n2):
+        for col1, col2 in zip(row1, row2):
+            if col1 != col2:
+                return False
+    return True
+
+
 if loadfile:
-    board.game_to_animate = Game.load(file_path=loadfile)
+    loaded_game = Game.load(file_path="saved_games/", file_name=loadfile)
+    if is_equal(loaded_game[0], board.board):
+        loaded_game = loaded_game[1:]
+        board.last_player = 2
+
+    board.game_to_animate = loaded_game
 
 
 # Ultimate global variables with individual set method spaghetti mess.
@@ -328,7 +357,7 @@ def render_text(text, x, y, font_size=30, font="Arial"):
 
 
 player1_mode, player2_mode = mode.split("v")
-if player1_mode == "p"or player1_mode == "1":
+if player1_mode == "p" or player1_mode == "1":
     player1 = player_move
 elif player1_mode == "a":
     player1 = agent_move
@@ -388,9 +417,18 @@ while running:
                 if board.pass_button.collision(x, y):
                     board.is_black = not board.is_black
                     board.go.do_pass()
+                    if player1_turn:
+                        change_last_move_p1((-1, -1))
+                    else:
+                        change_last_move_p2((-1, -1))
+
                 elif board.save_button.collision(x, y):
-                    board.go.save(file_path="./saved_games")
                     Tk().wm_withdraw() #to hide the main window
+                    
+                    save_name = tkinter.simpledialog.askstring("Save game", "Type filename of this game")
+                    save_name = "".join([save_name, ".npy"]) if not save_name.endswith(".npy") else save_name
+
+                    board.go.save(file_path="./saved_games", file_name=save_name)
                     messagebox.showinfo("Save successful!", "The game is saved!")
                 else:
                     row, column = board.shadow_piece

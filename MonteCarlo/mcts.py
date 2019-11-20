@@ -4,7 +4,8 @@ import numpy as np
 import random
 from math import sqrt
 import pydot # for visualizing the tree
-
+import pandas as pd
+import csv   
 import time
 """
 Selection — you start in the root — the state, and select a child — a move. 
@@ -36,22 +37,36 @@ class MCTS:
         self.c = c
         self.tau = tau
         self.steps = steps
+        self.counter = 0
+        self.temp_time = {"rollout": [], "tree_search": []} 
 
     def initialize_root(self, state):
         self.root_node = Node(None, state, None, self.player_id)
 
     #Extends the MCT with both the neural network and MCTS and finds the best possible choice.
     def pick_action(self, state):
+
+        start = time.time()
         self.initialize_root(state)
         
         for _ in range(self.steps):
+            start_treesearch = time.time()
             self.tree_search(self.root_node)
+            self.temp_time["tree_search"].append(time.time()-start_treesearch)
 
-        return self.__find_best_action()
+        new_action = self.__find_best_action()
+
+        #take the time
+        end_time = time.time()-start
+        self.write_to_file(end_time)
+
+        return new_action
 
 
     def rollout(self, node: Node):
+        rollout_time = time.time()
         win = self.environment.rollout(state=node.state, player=self.player_id, start_player=node.player)
+        self.temp_time["rollout"].append(time.time() - rollout_time)
         self.back_propagation(node, win)
     
     def back_propagation(self, node: Node, win: bool):
@@ -188,6 +203,24 @@ class MCTS:
         graph = pydot.Dot(graph_type='graph')
         self.build_graph(None, self.root_node, graph)
         graph.write_png('graph.png')
+
+
+    def write_to_file(self,total_time, file_name = "time_taking.csv"):
+        avg_treesearch = np.array(self.temp_time["tree_search"]).mean()
+        avg_rollout = np.array(self.temp_time["rollout"]).mean()
+        row = [total_time, avg_treesearch, avg_rollout,self.steps, self.counter]
+        self.counter +=1
+        print("writing to file... ")
+
+        with open("time_taking.csv",'a') as f:
+            writer = csv.writer(f)
+            print(row)
+            writer.writerow(row)
+            print("done writing!")
+            f.close()
+
+        self.temp_time["tree_search"] = []
+        self.temp_time["rollout"] = []
 
 
     def build_graph(self, graph_root, tree_root, graph):

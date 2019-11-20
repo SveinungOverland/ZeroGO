@@ -1,7 +1,8 @@
 from agent import Agent
-from Go.go import BLACK, WHITE, PASS_MOVE
+from Go.go import BLACK, WsHITE, PASS_MOVE
 import numpy as np
 import time
+import csv
 import os
 import sys
 import random
@@ -183,16 +184,23 @@ def self_play(agent: Agent, games_to_play: int, save_path: str, training_data_sa
 
     agent.compile_model()
 
+    time_values = [None,None]
+
     metrics = None
     for i in range(games_to_play):
         # Play game
         agent.mcts.buffer.clear()
+        start  = time.time()
         winner = play_game(agent, None, max_game_iterations=max_game_iterations, verbose=verbose)
+        time_values[0] = time.time() - start
 
         # Train on result
+        start = time.time() 
         metrics = agent.train(winner == agent.player, verbose=verbose)
-
+        time_values[1] = time.time() - start 
         # Save the training data
+        write_to_file(time_values)
+        
         if verbose:
             print("Starting to save training data")
         
@@ -304,3 +312,13 @@ def evaluate(agent_best: Agent, agent_latest: Agent, games_to_play: int, save_pa
     if latest_player_win_percentage >= 0.55:
         return agent_latest
     return agent_best
+
+
+def write_to_file(row,  file_name = "time_taking.csv"):
+    print("writing to file... ")
+
+    with open("time_taking.csv",'a') as f:
+        writer = csv.writer(f)
+        writer.writerow(row)
+        print("done writing!")
+        f.close()
