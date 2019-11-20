@@ -158,7 +158,7 @@ global screen
 
 parser = argparse.ArgumentParser(description="Go game")
 parser.add_argument("-mode", "--mode", type=str, help="Define players, (e.g 1v1, 1va, ava)", default="1va")
-parser.add_argument("-path", "--path", type=str, help="Path for weights?", default="models/v1/best")
+parser.add_argument("-path", "--path", type=str, help="Path for weights?")
 parser.add_argument("-dimension", "--dimension", type=int, help="Board dimension", default=5)
 parser.add_argument("-loadfile", "--loadfile", type=str, help="Load board to animate", default=None)
 parser.add_argument("-interval", "--interval", type=int, help="Seconds between each animation frame", default=2)
@@ -188,8 +188,11 @@ animate = loadfile != None
 
 agent_black = Agent(1, dimension=dimension, steps=75)
 agent_white = Agent(2, dimension=dimension, steps=75)
-agent_black.load(args.path)
-agent_white.load(args.path)
+
+if args.path:
+    agent_black.load(args.path)
+    agent_white.load(args.path)
+
 board = BoardView(screen, board_x, board_y, board_width, board_height, dimension=args.dimension)
 
 
