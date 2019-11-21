@@ -149,7 +149,7 @@ class Model:
     net = self.__retrieve_net(Mode.Model)
     net.compile(
       optimizer=Adam(learning_rate=learning_rate),
-      loss=['mean_squared_error', tf.nn.softmax_cross_entropy_with_logits_v2],
+      loss=['mean_squared_error', tf.nn.softmax_cross_entropy_with_logits], #  tf.nn.softmax_cross_entropy_with_logits_v2],
       metrics=['accuracy'],
     )
 

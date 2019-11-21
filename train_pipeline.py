@@ -35,8 +35,8 @@ def exec_pipeline():
 
         # SELF PLAY
         print("\n\n-------- SELF PLAY ----------")
-        best_metrics = self_play_multi(best_agent, iterations=4, num_of_processes=15, save_path=save_path, training_data_save_path=base_path, max_game_iterations=50, save_model=True, verbose=VERBOSE)
-        # best_metrics = self_play(best_agent, games_to_play=1, save_path=save_path, training_data_save_path=base_path, model_save_rate=0, max_game_iterations=2, verbose=VERBOSE)
+        #best_metrics = self_play_multi(best_agent, iterations=4, num_of_processes=15, save_path=save_path, training_data_save_path=base_path, max_game_iterations=50, save_model=True, verbose=VERBOSE)
+        best_metrics = self_play(best_agent, games_to_play=3, save_path=save_path, training_data_save_path=base_path, model_save_rate=0, max_game_iterations=30, verbose=VERBOSE)
 
         # Log and save model
         save_and_log(best_agent, None, save_path=save_path, iteration=current_training_iteration, log=False, overwrite=True)

@@ -1,5 +1,5 @@
 from agent import Agent
-from Go.go import BLACK, WsHITE, PASS_MOVE
+from Go.go import BLACK, WHITE, PASS_MOVE
 import numpy as np
 import time
 import csv
