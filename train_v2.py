@@ -184,27 +184,19 @@ def self_play(agent: Agent, games_to_play: int, save_path: str, training_data_sa
 
     agent.compile_model()
 
-    time_values = [None,None,None,None]
-
     metrics = None
     for i in range(games_to_play):
-        start_total = time.time()
         # Play game
         agent.mcts.buffer.clear()
-        start  = time.time()
         winner = play_game(agent, None, max_game_iterations=max_game_iterations, verbose=verbose)
-        time_values[0] = time.time() - start
 
         # Train on result
-        start = time.time() 
         metrics = agent.train(winner == agent.player, verbose=verbose)
-        time_values[1] = time.time() - start 
-        # Save the training data
-        
 
+        # Save the training data
         if verbose:
             print("Starting to save training data")
-        start = time.time()
+
         training_data = agent.mcts.buffer.data.copy()
         z = 1 if winner == agent.player else -1
         for j, data in enumerate(training_data):
@@ -216,10 +208,6 @@ def self_play(agent: Agent, games_to_play: int, save_path: str, training_data_sa
         # Log and save model
         if (model_save_rate > 0 and (i == 0 or model_save_rate%i == 0)) or model_save_rate == 0:
             save_and_log(agent, metrics, save_path, i, log=False, overwrite=True)
-        time_values[2] = time.time() - start
-
-        time_values[3] = time.time() - start_total
-        write_to_file(time_values)
 
         if verbose:
             print(f"Finished training and saving game {i+1}/{games_to_play}")
@@ -317,13 +305,3 @@ def evaluate(agent_best: Agent, agent_latest: Agent, games_to_play: int, save_pa
     if latest_player_win_percentage >= 0.55:
         return agent_latest
     return agent_best
-
-
-def write_to_file(row,  file_name = "time_taking.csv"):
-    print("writing to file... ")
-
-    with open("time_taking.csv",'a') as f:
-        writer = csv.writer(f)
-        writer.writerow(row)
-        print("done writing!")
-        f.close()

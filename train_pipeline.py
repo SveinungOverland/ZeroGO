@@ -9,7 +9,7 @@ import os
 
 TRAIN_STOP_TIME = '06/12/19 14:00:00'
 VERSION = 1
-VERBOSE = False
+VERBOSE = True
 
 training_end_time = datetime.strptime(TRAIN_STOP_TIME, '%d/%m/%y %H:%M:%S').timestamp()
 
