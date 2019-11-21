@@ -391,6 +391,16 @@ else:
     board.render_shadow = False
 
 
+def save_game():
+    Tk().wm_withdraw() #to hide the main window
+    
+    save_name = tkinter.simpledialog.askstring("Save game", "Type filename of this game")
+    save_name = "".join([save_name, ".npy"]) if not save_name.endswith(".npy") else save_name
+
+    board.go.save(file_path="./saved_games", file_name=save_name)
+    messagebox.showinfo("Save successful!", "The game is saved!")
+
+
 while running:
     if not animate:
         # Did the user click the window close button?
@@ -408,7 +418,12 @@ while running:
 
                 if row >= 0 and row < dimension and column >= 0 and column < dimension:
                     board.move_shadow(row=row, column=column)
-                    
+            
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_s and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                    print("You pressed ctrl + s!")
+                    save_game()
+
             elif event.type == pygame.MOUSEBUTTONUP:
                 if not can_click_on_board:
                     continue
@@ -423,13 +438,8 @@ while running:
                         change_last_move_p2((-1, -1))
 
                 elif board.save_button.collision(x, y):
-                    Tk().wm_withdraw() #to hide the main window
-                    
-                    save_name = tkinter.simpledialog.askstring("Save game", "Type filename of this game")
-                    save_name = "".join([save_name, ".npy"]) if not save_name.endswith(".npy") else save_name
-
-                    board.go.save(file_path="./saved_games", file_name=save_name)
-                    messagebox.showinfo("Save successful!", "The game is saved!")
+                    thread = Thread(target=save_game, args=())
+                    thread.start()
                 else:
                     row, column = board.shadow_piece
                     row = int(row)
